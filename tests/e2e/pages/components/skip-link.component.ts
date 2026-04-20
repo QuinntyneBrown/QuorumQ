@@ -1,4 +1,4 @@
-import { Page, expect } from '@playwright/test';
+import { Page, Locator, expect } from '@playwright/test';
 import { BasePage } from '../base.page';
 
 export class SkipLinkComponent extends BasePage {
@@ -6,12 +6,20 @@ export class SkipLinkComponent extends BasePage {
     super(page);
   }
 
-  async tabToSkipLink(): Promise<void> {
+  skipLink(): Locator {
+    return this.page.locator('a.skip-link');
+  }
+
+  mainContent(): Locator {
+    return this.page.locator('#main');
+  }
+
+  async focusSkipLink(): Promise<void> {
     await this.page.keyboard.press('Tab');
   }
 
   async activateSkipLink(): Promise<void> {
-    await this.page.keyboard.press('Tab');
+    await this.focusSkipLink();
     await this.page.keyboard.press('Enter');
   }
 

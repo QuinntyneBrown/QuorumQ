@@ -34,6 +34,10 @@ interface NavItem {
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
+  host: {
+    'data-testid': 'app-shell',
+    '[attr.data-layout]': 'layout()',
+  },
 })
 export class App {
   private readonly bp = inject(BreakpointObserver);

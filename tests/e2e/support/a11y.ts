@@ -10,7 +10,6 @@ export async function expectAccessible(page: Page, options?: A11yOptions): Promi
   let builder = new AxeBuilder({ page });
   if (options?.include) builder = builder.include(options.include);
   if (options?.exclude) builder = builder.exclude(options.exclude);
-
   const results = await builder.analyze();
   const violations = results.violations.filter(
     v => v.impact === 'critical' || v.impact === 'serious',
@@ -24,4 +23,9 @@ export async function expectAccessible(page: Page, options?: A11yOptions): Promi
 export async function expectLiveRegionAnnouncement(page: Page, text: string): Promise<void> {
   const region = page.locator('[aria-live="polite"], [aria-live="assertive"]');
   await expect(region.first()).toContainText(text, { timeout: 5000 });
+}
+
+/** @deprecated use expectAccessible */
+export async function expectNoA11yViolations(page: Page): Promise<void> {
+  return expectAccessible(page);
 }

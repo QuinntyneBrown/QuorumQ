@@ -7,18 +7,20 @@ $_drawer-width: 256px;
 
 .skip-link {
   position: absolute;
-  top: -100%;
-  left: 0;
+  top: $space-3;
+  left: $space-3;
   z-index: $z-live-critical;
   padding: $space-3 $space-4;
-  background: var(--mdc-theme-primary, #E04F3C);
-  color: #fff;
+  background: var(--mat-sys-primary, #E04F3C);
+  color: var(--mat-sys-on-primary, #fff);
   font-weight: 600;
   text-decoration: none;
-  border-radius: 0 0 $radius-sm 0;
+  border-radius: $radius-sm;
+  transform: translateY(calc(-200% - #{$space-6}));
+  transition: transform $motion-short-3 $motion-ease-standard;
 
   &:focus {
-    top: 0;
+    transform: translateY(0);
   }
 }
 

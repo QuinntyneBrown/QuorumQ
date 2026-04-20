@@ -9,9 +9,9 @@ html, body {
   font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-// Focus-visible ring
+// Focus-visible ring (L2-23, L2-27)
 :focus-visible {
-  outline: 3px solid var(--qq-color-brand);
+  outline: 3px solid var(--mat-sys-primary);
   outline-offset: 2px;
 }
 

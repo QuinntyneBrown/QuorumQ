@@ -40,7 +40,7 @@ export const routes: Routes = [
   {
     path: '_gallery',
     loadComponent: () =>
-      import('./features/shared/gallery.page').then(m => m.GalleryPageComponent),
+      import('./features/gallery/gallery.component').then(m => m.GalleryComponent),
   },
   {
     path: '**',

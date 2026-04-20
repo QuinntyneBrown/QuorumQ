@@ -1,5 +1,5 @@
 import { Page, expect } from '@playwright/test';
-import AxeBuilder from '@axe-core/playwright';
+import { expectAccessible } from '../support/a11y';
 
 export class BasePage {
   constructor(protected readonly page: Page) {}
@@ -15,11 +15,7 @@ export class BasePage {
   }
 
   async expectAccessible(): Promise<void> {
-    const results = await new AxeBuilder({ page: this.page }).analyze();
-    const violations = results.violations.filter(
-      v => v.impact === 'critical' || v.impact === 'serious',
-    );
-    expect(violations, `a11y violations: ${JSON.stringify(violations, null, 2)}`).toHaveLength(0);
+    return expectAccessible(this.page);
   }
 
   async expectNoCLS(): Promise<void> {
