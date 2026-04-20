@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { EmptyStateComponent } from '@components';
+import { SessionStore } from '../../core/auth/session.store';
 
 @Component({
   selector: 'app-no-teams-page',
@@ -18,6 +19,11 @@ import { EmptyStateComponent } from '@components';
     EmptyStateComponent,
   ],
   template: `
+    @if (session.user()?.emailVerified === false) {
+      <div class="verify-banner" data-testid="verify-email-banner" role="alert">
+        Please verify your email address to unlock all features.
+      </div>
+    }
     <div class="page-shell">
       <qq-empty-state
         title="You're not in any team yet"
@@ -68,6 +74,7 @@ import { EmptyStateComponent } from '@components';
     </div>
   `,
   styles: [`
+    .verify-banner { background: var(--mat-sys-error-container); color: var(--mat-sys-on-error-container); padding: 12px 24px; text-align: center; font-size: 14px; }
     .page-shell { min-height: 60vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; gap: 24px; }
     .cta-group { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
     .invite-input-row { display: flex; align-items: flex-start; gap: 8px; width: 100%; max-width: 480px; }
@@ -76,6 +83,7 @@ import { EmptyStateComponent } from '@components';
 })
 export class NoTeamsPage {
   private readonly router = inject(Router);
+  readonly session = inject(SessionStore);
 
   readonly showInput = signal(false);
   readonly inviteLinkControl = new FormControl('');
