@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using QuorumQ.Api.Auth;
 using QuorumQ.Api.Data;
 using QuorumQ.Api.Endpoints;
+using QuorumQ.Api.Models;
 using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -50,7 +52,19 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddScoped<IAuthorizationHandler, TeamMembershipHandler>();
+builder.Services.AddAuthorization(opts =>
+{
+    opts.AddPolicy("TeamMember", policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new TeamMembershipRequirement()));
+    opts.AddPolicy("TeamAdmin", policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new TeamMembershipRequirement { RequiredRole = MembershipRole.Admin }));
+    opts.AddPolicy("TeamOwner", policy => policy
+        .RequireAuthenticatedUser()
+        .AddRequirements(new TeamMembershipRequirement { RequiredRole = MembershipRole.Owner }));
+});
 
 builder.Services.AddRateLimiter(opts =>
 {

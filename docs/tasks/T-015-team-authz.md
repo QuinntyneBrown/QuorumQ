@@ -5,7 +5,7 @@
 **Primary area:** backend
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §4 (`Auth/TeamMembershipPolicy.cs`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -56,9 +56,9 @@ T-019; this task only adds security coverage atop what exists).
 
 ## Definition of Done
 
-- [ ] Every team-scoped endpoint registered in T-016 … T-035 uses
+- [x] Every team-scoped endpoint registered in T-016 … T-035 uses
       `.RequireTeamMembership()`.
-- [ ] Hub connection refused on unauthorized team.
-- [ ] 403 response body contains no identifying data about the other team.
-- [ ] Failing spec added first; passes on all four browser projects.
-- [ ] No duplicated authorization logic in endpoint handlers (L2-47).
+- [x] Hub connection refused on unauthorized team.
+- [x] 403 response body contains no identifying data about the other team.
+- [x] Failing spec added first; passes on all four browser projects.
+- [x] No duplicated authorization logic in endpoint handlers (L2-47).
