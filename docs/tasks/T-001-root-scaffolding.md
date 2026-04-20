@@ -5,7 +5,7 @@
 **Primary area:** infra
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §2
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
