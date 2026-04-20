@@ -78,6 +78,16 @@ builder.Services.AddRateLimiter(opts =>
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0,
             }));
+    opts.AddPolicy("invite-lookup", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0,
+            }));
     opts.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
@@ -129,6 +139,7 @@ app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
 
 app.MapAuthEndpoints();
 app.MapTeamEndpoints();
+app.MapInviteEndpoints();
 app.MapSessionEndpoints();
 app.MapSuggestionEndpoints();
 app.MapVoteEndpoints();

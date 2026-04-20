@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/06-screens-team.md`, `docs/designs/11-dialogs.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/teams/`), §4
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -63,10 +63,10 @@ dedicated error surface.
 
 ## Definition of Done
 
-- [ ] Invite tokens are cryptographically random and stored as-is (they
+- [x] Invite tokens are cryptographically random and stored as-is (they
       are capability tokens, not secrets to hash).
-- [ ] Owner/Admin-only for generate/revoke (enforced by T-015 policy).
-- [ ] Copy-to-clipboard announces success to the live region (T-009).
-- [ ] Expired/revoked and unknown tokens all render the same "invalid"
+- [x] Owner/Admin-only for generate/revoke (enforced by T-015 policy).
+- [x] Copy-to-clipboard announces success to the live region (T-009).
+- [x] Expired/revoked and unknown tokens all render the same "invalid"
       surface (no enumeration — L2-41 spirit).
-- [ ] Spec passes on all four browser projects.
+- [x] Spec passes on all four browser projects.

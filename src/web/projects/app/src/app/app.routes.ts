@@ -20,6 +20,12 @@ export const routes: Routes = [
       import('./features/teams/teams.routes').then(m => m.teamsRoutes),
   },
   {
+    path: 'invites/:token',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/teams/accept-invite.page').then(m => m.AcceptInvitePage),
+  },
+  {
     path: 'teams/:teamId/sessions',
     canActivate: [authGuard],
     loadChildren: () =>

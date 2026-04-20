@@ -6,6 +6,10 @@ export const teamsRoutes: Routes = [
     loadComponent: () => import('./create-team.page').then(m => m.CreateTeamPage),
   },
   {
+    path: ':teamId/invites',
+    loadComponent: () => import('./team-invite.page').then(m => m.TeamInvitePage),
+  },
+  {
     path: ':teamId',
     loadComponent: () => import('./team-dashboard.page').then(m => m.TeamDashboardPage),
   },
