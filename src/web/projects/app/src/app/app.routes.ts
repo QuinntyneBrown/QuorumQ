@@ -2,6 +2,11 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
+    path: '',
+    pathMatch: 'full',
+    redirectTo: 'teams',
+  },
+  {
     path: 'auth',
     loadChildren: () =>
       import('./features/auth/auth.routes').then(m => m.authRoutes),
@@ -17,7 +22,7 @@ export const routes: Routes = [
       import('./features/sessions/sessions.routes').then(m => m.sessionsRoutes),
   },
   {
-    path: 'teams/:teamId/history',
+    path: 'history',
     loadChildren: () =>
       import('./features/history/history.routes').then(m => m.historyRoutes),
   },
@@ -29,11 +34,11 @@ export const routes: Routes = [
   {
     path: '_gallery',
     loadComponent: () =>
-      import('./features/gallery/gallery.component').then(m => m.GalleryComponent),
+      import('./features/shared/gallery.page').then(m => m.GalleryPageComponent),
   },
   {
     path: '**',
     loadComponent: () =>
-      import('./features/shared/not-found.page').then(m => m.NotFoundPage),
+      import('./features/shared/not-found.page').then(m => m.NotFoundPageComponent),
   },
 ];

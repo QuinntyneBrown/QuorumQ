@@ -1,70 +1,86 @@
-<div class="app-shell" [attr.data-layout]="layout()">
+<a class="skip-link" href="#main">Skip to content</a>
 
-  <!-- Top app bar -->
-  <mat-toolbar class="app-bar" color="primary">
-    <span class="app-bar__brand">QuorumQ</span>
-    <span class="app-bar__spacer"></span>
-    <button mat-icon-button [matMenuTriggerFor]="accountMenu" aria-label="Account menu">
-      <mat-icon>account_circle</mat-icon>
+<mat-toolbar class="app-bar" color="primary">
+  @if (!isMobile()) {
+    <button mat-icon-button aria-label="Toggle navigation" (click)="toggleDrawer()">
+      <mat-icon>menu</mat-icon>
     </button>
-    <mat-menu #accountMenu="matMenu">
-      <button mat-menu-item routerLink="/settings">
-        <mat-icon>settings</mat-icon>Settings
-      </button>
-      <button mat-menu-item routerLink="/auth/sign-out">
-        <mat-icon>logout</mat-icon>Sign out
-      </button>
-      <button mat-menu-item>
-        <mat-icon>info</mat-icon>About
-      </button>
-    </mat-menu>
-  </mat-toolbar>
+  }
+  <span class="app-bar__title">QuorumQ</span>
+  <span class="spacer"></span>
+  <button mat-icon-button aria-label="Account menu" [matMenuTriggerFor]="accountMenu">
+    <mat-icon>account_circle</mat-icon>
+  </button>
+</mat-toolbar>
 
-  <!-- Body: rail (md+) + content -->
-  <div class="app-body">
+<mat-menu #accountMenu="matMenu">
+  <button mat-menu-item routerLink="/settings">
+    <mat-icon>settings</mat-icon>
+    <span>Settings</span>
+  </button>
+  <button mat-menu-item>
+    <mat-icon>info</mat-icon>
+    <span>About</span>
+  </button>
+  <button mat-menu-item>
+    <mat-icon>logout</mat-icon>
+    <span>Sign out</span>
+  </button>
+</mat-menu>
 
-    <!-- Navigation rail — tablet & desktop -->
-    @if (isTabletOrAbove) {
-      <nav class="nav-rail" aria-label="Primary navigation" data-testid="nav-rail">
-        @for (item of navItems; track item.path) {
+@if (isMobile()) {
+  <!-- Mobile: content + bottom nav -->
+  <main id="main" tabindex="-1" class="app-content app-content--mobile">
+    <router-outlet />
+  </main>
+
+  <nav class="bottom-nav" role="navigation" aria-label="Primary navigation" data-testid="bottom-nav">
+    @for (item of navItems; track item.route) {
+      <a
+        [routerLink]="item.route"
+        routerLinkActive="bottom-nav__item--active"
+        class="bottom-nav__item"
+        [attr.aria-label]="item.label"
+      >
+        <mat-icon class="bottom-nav__icon">{{ item.icon }}</mat-icon>
+        <span class="bottom-nav__label">{{ item.label }}</span>
+      </a>
+    }
+  </nav>
+} @else {
+  <!-- Tablet/Desktop: sidenav rail or drawer -->
+  <mat-sidenav-container class="app-sidenav-container">
+    <mat-sidenav
+      class="app-sidenav"
+      [class.app-sidenav--rail]="!isDesktop()"
+      [class.app-sidenav--drawer]="isDesktop()"
+      mode="side"
+      [opened]="isDesktop() ? drawerOpen() : true"
+      role="navigation"
+      aria-label="Primary navigation"
+      data-testid="nav-rail"
+    >
+      <mat-nav-list>
+        @for (item of navItems; track item.route) {
           <a
-            [routerLink]="item.path"
-            routerLinkActive="nav-rail__item--active"
-            class="nav-rail__item"
-            [matTooltip]="item.label"
-            matTooltipPosition="right"
+            mat-list-item
+            [routerLink]="item.route"
+            routerLinkActive="nav-item--active"
             [attr.aria-label]="item.label"
           >
-            <mat-icon>{{ item.icon }}</mat-icon>
-            @if (layout() === 'desktop') {
-              <span class="nav-rail__label">{{ item.label }}</span>
+            <mat-icon matListItemIcon>{{ item.icon }}</mat-icon>
+            @if (isDesktop()) {
+              <span matListItemTitle>{{ item.label }}</span>
             }
           </a>
         }
-      </nav>
-    }
+      </mat-nav-list>
+    </mat-sidenav>
 
-    <!-- Page content -->
-    <main class="app-content" id="main-content" tabindex="-1">
-      <router-outlet />
-    </main>
-  </div>
-
-  <!-- Bottom navigation — mobile -->
-  @if (isMobile) {
-    <nav class="bottom-nav" aria-label="Primary navigation" data-testid="bottom-nav">
-      @for (item of navItems; track item.path) {
-        <a
-          [routerLink]="item.path"
-          routerLinkActive="bottom-nav__item--active"
-          class="bottom-nav__item"
-          [attr.aria-label]="item.label"
-        >
-          <mat-icon class="bottom-nav__icon">{{ item.icon }}</mat-icon>
-          <span class="bottom-nav__label">{{ item.label }}</span>
-        </a>
-      }
-    </nav>
-  }
-
-</div>
+    <mat-sidenav-content>
+      <main id="main" tabindex="-1" class="app-content">
+        <router-outlet />
+      </main>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+}
