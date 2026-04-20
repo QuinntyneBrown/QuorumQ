@@ -10,7 +10,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Membership> Memberships => Set<Membership>();
     public DbSet<Invite> Invites => Set<Invite>();
     public DbSet<Restaurant> Restaurants => Set<Restaurant>();
-    public DbSet<LunchSession> Sessions => Set<LunchSession>();
+    public DbSet<LunchSession> LunchSessions => Set<LunchSession>();
     public DbSet<Suggestion> Suggestions => Set<Suggestion>();
     public DbSet<Vote> Votes => Set<Vote>();
     public DbSet<Comment> Comments => Set<Comment>();
@@ -27,7 +27,6 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             e.Property(u => u.Email).HasMaxLength(256).IsRequired();
             e.HasIndex(u => u.Email).IsUnique();
             e.Property(u => u.DisplayName).HasMaxLength(100).IsRequired();
-            // Soft-delete global filter
             e.HasQueryFilter(u => u.DeletedAt == null);
         });
 

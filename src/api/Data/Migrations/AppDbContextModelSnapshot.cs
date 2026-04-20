@@ -48,12 +48,6 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SessionId");
-
-                    b.HasIndex("SuggestionId");
-
-                    b.HasIndex("UserId");
-
                     b.ToTable("Comments");
                 });
 
@@ -77,12 +71,9 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.Property<string>("Token")
                         .IsRequired()
-                        .HasMaxLength(128)
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TeamId");
 
                     b.ToTable("Invites");
                 });
@@ -123,9 +114,7 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TeamId");
-
-                    b.ToTable("Sessions");
+                    b.ToTable("LunchSessions");
                 });
 
             modelBuilder.Entity("QuorumQ.Api.Models.Membership", b =>
@@ -145,8 +134,6 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.HasKey("UserId", "TeamId");
 
-                    b.HasIndex("TeamId");
-
                     b.ToTable("Memberships");
                 });
 
@@ -161,7 +148,6 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.Property<string>("Kind")
                         .IsRequired()
-                        .HasMaxLength(64)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Payload")
@@ -182,8 +168,6 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
                     b.ToTable("Notifications");
                 });
 
@@ -199,8 +183,6 @@ namespace QuorumQ.Api.Data.Migrations
                         .HasColumnType("INTEGER");
 
                     b.HasKey("UserId", "TeamId");
-
-                    b.HasIndex("TeamId");
 
                     b.ToTable("NotificationPreferences");
                 });
@@ -225,7 +207,6 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("TeamId")
@@ -235,8 +216,6 @@ namespace QuorumQ.Api.Data.Migrations
                         .HasColumnType("TEXT");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TeamId");
 
                     b.ToTable("Restaurants");
                 });
@@ -270,10 +249,6 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RestaurantId");
-
-                    b.HasIndex("UserId");
-
                     b.HasIndex("SessionId", "UserId")
                         .IsUnique();
 
@@ -303,10 +278,6 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("RestaurantId");
-
-                    b.HasIndex("SessionId");
-
                     b.ToTable("Suggestions");
                 });
 
@@ -332,8 +303,6 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerId");
-
                     b.ToTable("Teams");
                 });
 
@@ -354,13 +323,11 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.Property<string>("DisplayName")
                         .IsRequired()
-                        .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Email")
                         .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("TEXT");
+                        .HasColumnType("TEXT COLLATE NOCASE");
 
                     b.Property<DateTime?>("EmailVerifiedAt")
                         .HasColumnType("TEXT");
@@ -397,244 +364,10 @@ namespace QuorumQ.Api.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SuggestionId");
-
-                    b.HasIndex("UserId");
-
                     b.HasIndex("SessionId", "UserId")
                         .IsUnique();
 
                     b.ToTable("Votes");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Comment", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.LunchSession", "Session")
-                        .WithMany("Comments")
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("QuorumQ.Api.Models.Suggestion", "Suggestion")
-                        .WithMany("Comments")
-                        .HasForeignKey("SuggestionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("QuorumQ.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Session");
-
-                    b.Navigation("Suggestion");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Invite", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.Team", "Team")
-                        .WithMany()
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.LunchSession", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.Team", "Team")
-                        .WithMany("Sessions")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Membership", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.Team", "Team")
-                        .WithMany("Memberships")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("QuorumQ.Api.Models.User", "User")
-                        .WithMany("Memberships")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Notification", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.User", "User")
-                        .WithMany("Notifications")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.NotificationPreference", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.Team", "Team")
-                        .WithMany()
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("QuorumQ.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Restaurant", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.Team", "Team")
-                        .WithMany("Restaurants")
-                        .HasForeignKey("TeamId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Team");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Review", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.Restaurant", "Restaurant")
-                        .WithMany()
-                        .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("QuorumQ.Api.Models.LunchSession", "Session")
-                        .WithMany()
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("QuorumQ.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Restaurant");
-
-                    b.Navigation("Session");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Suggestion", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.Restaurant", "Restaurant")
-                        .WithMany("Suggestions")
-                        .HasForeignKey("RestaurantId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("QuorumQ.Api.Models.LunchSession", "Session")
-                        .WithMany("Suggestions")
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Restaurant");
-
-                    b.Navigation("Session");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Team", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.User", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Owner");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Vote", b =>
-                {
-                    b.HasOne("QuorumQ.Api.Models.LunchSession", "Session")
-                        .WithMany("Votes")
-                        .HasForeignKey("SessionId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("QuorumQ.Api.Models.Suggestion", "Suggestion")
-                        .WithMany("Votes")
-                        .HasForeignKey("SuggestionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("QuorumQ.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Session");
-
-                    b.Navigation("Suggestion");
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.LunchSession", b =>
-                {
-                    b.Navigation("Comments");
-
-                    b.Navigation("Suggestions");
-
-                    b.Navigation("Votes");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Restaurant", b =>
-                {
-                    b.Navigation("Suggestions");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Suggestion", b =>
-                {
-                    b.Navigation("Comments");
-
-                    b.Navigation("Votes");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.Team", b =>
-                {
-                    b.Navigation("Memberships");
-
-                    b.Navigation("Restaurants");
-
-                    b.Navigation("Sessions");
-                });
-
-            modelBuilder.Entity("QuorumQ.Api.Models.User", b =>
-                {
-                    b.Navigation("Memberships");
-
-                    b.Navigation("Notifications");
                 });
 #pragma warning restore 612, 618
         }
