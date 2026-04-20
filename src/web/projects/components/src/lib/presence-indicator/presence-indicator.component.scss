@@ -1,0 +1,27 @@
+@use '../theme/tokens' as t;
+
+@keyframes qq-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(1.2); }
+}
+
+.qq-presence {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: t.$radius-full;
+  border: 2px solid var(--mat-sys-surface);
+
+  &--online {
+    background-color: var(--mat-sys-secondary);
+    animation: qq-pulse t.$motion-extra-long-2 t.$motion-ease-standard infinite;
+
+    @media (prefers-reduced-motion: reduce) {
+      animation: none;
+    }
+  }
+
+  &--offline {
+    background-color: var(--mat-sys-outline);
+  }
+}

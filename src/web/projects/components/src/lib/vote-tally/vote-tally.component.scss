@@ -1,0 +1,47 @@
+@use '../theme/tokens' as t;
+
+.qq-vote-tally {
+  display: flex;
+  flex-direction: column;
+  gap: t.$space-3;
+
+  &__row {
+    display: grid;
+    grid-template-columns: 1fr 3fr auto;
+    align-items: center;
+    gap: t.$space-3;
+  }
+
+  &__label {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 0.875rem;
+  }
+
+  &__bar-track {
+    height: 8px;
+    border-radius: t.$radius-full;
+    background-color: var(--mat-sys-surface-variant);
+    overflow: hidden;
+  }
+
+  &__bar {
+    height: 100%;
+    border-radius: t.$radius-full;
+    background-color: var(--mat-sys-primary);
+    transition: width t.$motion-medium-2 t.$motion-ease-emphasized;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition: none;
+    }
+  }
+
+  &__count {
+    font-variant-numeric: tabular-nums;
+    font-size: 0.875rem;
+    color: var(--mat-sys-on-surface-variant);
+    min-width: 2ch;
+    text-align: end;
+  }
+}

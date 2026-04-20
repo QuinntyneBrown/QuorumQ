@@ -1,0 +1,43 @@
+@use '../theme/tokens' as t;
+
+.qq-winner-reveal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: t.$radius-2xl;
+  background-color: var(--mat-sys-tertiary-container);
+  padding: t.$space-10;
+  opacity: 0;
+  transform: scale(0.9);
+  transition:
+    opacity t.$motion-long-4 t.$motion-ease-emphasized-decel,
+    transform t.$motion-long-4 t.$motion-ease-emphasized-decel;
+
+  &--visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  &__content {
+    text-align: center;
+  }
+
+  &__trophy {
+    font-size: t.$icon-hero;
+    line-height: 1;
+    margin-block-end: t.$space-4;
+  }
+
+  &__name {
+    color: var(--mat-sys-on-tertiary-container);
+    font-size: 2rem;
+    font-weight: 500;
+    margin: 0;
+  }
+}

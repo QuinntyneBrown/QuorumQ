@@ -1,0 +1,23 @@
+@use '../theme/tokens' as t;
+
+.qq-session-card {
+  border-radius: t.$radius-md;
+
+  &__status-chip {
+    text-transform: capitalize;
+
+    &--suggesting { background-color: var(--mat-sys-secondary-container); color: var(--mat-sys-on-secondary-container); }
+    &--voting     { background-color: var(--mat-sys-primary-container);   color: var(--mat-sys-on-primary-container); }
+    &--decided    { background-color: var(--mat-sys-tertiary-container);  color: var(--mat-sys-on-tertiary-container); }
+    &--cancelled  { background-color: var(--mat-sys-surface-variant);     color: var(--mat-sys-on-surface-variant); }
+  }
+
+  &__countdown {
+    margin-block: t.$space-3;
+  }
+
+  &__actions {
+    padding: t.$space-3 t.$space-4;
+    gap: t.$space-2;
+  }
+}

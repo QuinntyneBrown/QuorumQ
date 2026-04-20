@@ -1,0 +1,20 @@
+@use '../theme/tokens' as t;
+
+:host {
+  display: inline-flex;
+}
+
+.qq-button {
+  min-height: 44px;
+  min-width: 44px;
+  transition-duration: t.$motion-short-4;
+  transition-timing-function: t.$motion-ease-standard;
+
+  &--loading {
+    cursor: not-allowed;
+  }
+
+  &__spinner {
+    margin-inline-end: t.$space-2;
+  }
+}

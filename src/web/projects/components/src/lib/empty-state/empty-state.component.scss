@@ -1,0 +1,34 @@
+@use '../theme/tokens' as t;
+
+.qq-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: t.$space-10 t.$space-6;
+  gap: t.$space-4;
+
+  &__illustration {
+    font-size: t.$icon-hero;
+    line-height: 1;
+    color: var(--mat-sys-outline);
+  }
+
+  &__title {
+    margin: 0;
+    color: var(--mat-sys-on-surface);
+    font-size: 1.5rem;
+    font-weight: 400;
+  }
+
+  &__description {
+    margin: 0;
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 0.875rem;
+    max-width: 32ch;
+  }
+
+  &__cta {
+    margin-block-start: t.$space-2;
+  }
+}
