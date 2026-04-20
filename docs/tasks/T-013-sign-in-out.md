@@ -5,7 +5,7 @@
 **Primary area:** full stack (frontend-heavy)
 **Design refs:** `docs/designs/05-screens-auth.md`, `docs/designs/04-layout-navigation.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/auth/`, `core/auth/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -56,8 +56,8 @@ Three consecutive failures trigger a clear rate-limit message.
 
 ## Definition of Done
 
-- [ ] Failing Playwright spec added first; passes after implementation.
-- [ ] Sign-in navigates to `/teams/:lastId` or `/teams` when no history.
-- [ ] Sign-out clears cookie server-side AND client signals.
-- [ ] Rate-limit UI surfaces a countdown derived from `Retry-After`.
-- [ ] Keyboard-only sign-in and sign-out verified in the spec (L2-23).
+- [x] Failing Playwright spec added first; passes after implementation.
+- [x] Sign-in navigates to `/teams/:lastId` or `/teams` when no history.
+- [x] Sign-out clears cookie server-side AND client signals.
+- [x] Rate-limit UI surfaces a countdown derived from `Retry-After`.
+- [x] Keyboard-only sign-in and sign-out verified in the spec (L2-23).

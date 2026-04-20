@@ -14,12 +14,26 @@ export interface User {
 interface SignUpRequest { email: string; password: string; displayName: string; }
 interface SignInRequest { email: string; password: string; }
 
+const LAST_TEAM_KEY = 'qq_last_team';
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly base = environment.apiBaseUrl;
 
   readonly user = signal<User | null>(null);
+
+  setLastTeam(teamId: string): void {
+    localStorage.setItem(LAST_TEAM_KEY, teamId);
+  }
+
+  getLastTeam(): string | null {
+    return localStorage.getItem(LAST_TEAM_KEY);
+  }
+
+  clearLastTeam(): void {
+    localStorage.removeItem(LAST_TEAM_KEY);
+  }
 
   signUp(email: string, password: string, displayName: string): Observable<User> {
     return this.http.post<User>(`${this.base}/auth/sign-up`, { email, password, displayName } satisfies SignUpRequest);
@@ -33,7 +47,10 @@ export class AuthService {
 
   signOut(): Observable<void> {
     return this.http.post<void>(`${this.base}/auth/sign-out`, {}, { withCredentials: true }).pipe(
-      tap(() => this.user.set(null)),
+      tap(() => {
+        this.user.set(null);
+        this.clearLastTeam();
+      }),
     );
   }
 

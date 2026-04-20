@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { BreakpointObserver, Breakpoints } from '@angular/cdk/layout';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { map } from 'rxjs/operators';
@@ -9,6 +9,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
+import { AuthService } from './core/auth/auth.service';
 
 type Layout = 'mobile' | 'tablet' | 'desktop';
 
@@ -41,6 +42,8 @@ interface NavItem {
 })
 export class App {
   private readonly bp = inject(BreakpointObserver);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
 
   readonly navItems: NavItem[] = [
     { label: 'Home', icon: 'home', route: '/teams' },
@@ -70,5 +73,12 @@ export class App {
 
   toggleDrawer(): void {
     this.drawerOpen.update(v => !v);
+  }
+
+  signOut(): void {
+    this.auth.signOut().subscribe({
+      next: () => this.router.navigate(['/auth/sign-in']),
+      error: () => this.router.navigate(['/auth/sign-in']),
+    });
   }
 }

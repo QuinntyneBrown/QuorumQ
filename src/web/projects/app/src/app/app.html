@@ -22,7 +22,7 @@
     <mat-icon>info</mat-icon>
     <span>About</span>
   </button>
-  <button mat-menu-item>
+  <button mat-menu-item (click)="signOut()" data-testid="sign-out-button">
     <mat-icon>logout</mat-icon>
     <span>Sign out</span>
   </button>
