@@ -5,7 +5,7 @@
 **Primary area:** backend
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §4
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -65,11 +65,11 @@ Add one smoke test under `tests/e2e/specs/_smoke/api-up.spec.ts`:
 
 ## Definition of Done
 
-- [ ] `dotnet run --project src/api` starts and `/health` returns 200.
-- [ ] `/swagger` is reachable in Development and absent in Production
+- [x] `dotnet run --project src/api` starts and `/health` returns 200.
+- [x] `/swagger` is reachable in Development and absent in Production
       (L2-44).
-- [ ] No `Services/`, `Application/`, `Domain/`, `Infrastructure/` folders
+- [x] No `Services/`, `Application/`, `Domain/`, `Infrastructure/` folders
       introduced (L2-44, L2-47).
-- [ ] Solution file references exactly one project (`Api.csproj`).
-- [ ] OpenAPI JSON document generated at `/openapi/v1.json` in Development
+- [x] Solution file references exactly one project (`Api.csproj`).
+- [x] OpenAPI JSON document generated at `/openapi/v1.json` in Development
       (consumed by T-003 / the Angular `openapi-typescript` pipeline).

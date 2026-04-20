@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using QuorumQ.Api.Data;
+using QuorumQ.Api.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,6 +20,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 if (builder.Environment.IsDevelopment())
 {
+    builder.Services.AddOpenApi();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 }
@@ -30,6 +32,7 @@ app.UseCors();
 
 if (app.Environment.IsDevelopment())
 {
+    app.MapOpenApi();
     app.UseSwagger();
     app.UseSwaggerUI();
 }
