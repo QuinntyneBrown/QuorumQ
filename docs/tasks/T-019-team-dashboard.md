@@ -7,7 +7,7 @@ path is completed after T-020 merges)
 **Primary area:** frontend (with small backend read-only endpoint)
 **Design refs:** `docs/designs/06-screens-team.md`, `docs/designs/07-screens-session.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/teams/team-dashboard.page.ts`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -57,8 +57,8 @@ lunch" CTA is at the top.
 
 ## Definition of Done
 
-- [ ] Failing spec added first; passes on all four browser projects.
-- [ ] At 375 px, the active session card (when present) is the first
+- [x] Failing spec added first; passes on all four browser projects.
+- [x] At 375 px, the active session card (when present) is the first
       element above the fold and consumes full width.
-- [ ] Works with and without an active session; both paths tested.
-- [ ] No duplicate call for active session — single `GET /dashboard`.
+- [x] Works with and without an active session; both paths tested.
+- [x] No duplicate call for active session — single `GET /dashboard`.

@@ -11,6 +11,17 @@ public static class TeamEndpoints
 {
     private record CreateTeamRequest(string Name, string? Description);
 
+    private record TeamDetail(
+        Guid Id, string Name, string? Description, Guid OwnerId,
+        string CallerRole, int MemberCount);
+
+    private record SessionDto(
+        Guid Id, string State, DateTime Deadline, DateTime StartedAt,
+        int SuggestionCount, string? WinnerName);
+
+    private record DashboardResponse(
+        TeamDetail Team, SessionDto? ActiveSession, IEnumerable<SessionDto> RecentSessions);
+
     private record TeamSummary(
         Guid Id,
         string Name,
@@ -30,6 +41,7 @@ public static class TeamEndpoints
         group.MapPost("/", CreateTeam);
         group.MapGet("/", ListTeams);
         group.MapGet("/{teamId:guid}", GetTeam).RequireTeamMembership();
+        group.MapGet("/{teamId:guid}/dashboard", GetDashboard).RequireTeamMembership();
 
         return app;
     }
@@ -137,5 +149,53 @@ public static class TeamEndpoints
             membership.Role.ToString(), memberCount);
 
         return Results.Ok(summary);
+    }
+
+    private static async Task<IResult> GetDashboard(
+        Guid teamId,
+        HttpContext ctx,
+        AppDbContext db)
+    {
+        var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
+
+        var team = await db.Teams.AsNoTracking().FirstOrDefaultAsync(t => t.Id == teamId);
+        if (team is null) return Results.NotFound();
+
+        var membership = await db.Memberships.AsNoTracking()
+            .FirstOrDefaultAsync(m => m.UserId == userId && m.TeamId == teamId);
+        if (membership is null) return Results.Forbid();
+
+        var memberCount = await db.Memberships.CountAsync(m => m.TeamId == teamId);
+
+        var teamDetail = new TeamDetail(
+            team.Id, team.Name, team.Description, team.OwnerId,
+            membership.Role.ToString(), memberCount);
+
+        var activeSession = await db.LunchSessions
+            .AsNoTracking()
+            .Where(s => s.TeamId == teamId &&
+                   (s.State == SessionState.Suggesting || s.State == SessionState.Voting))
+            .OrderByDescending(s => s.StartedAt)
+            .Select(s => new SessionDto(
+                s.Id, s.State.ToString(), s.Deadline, s.StartedAt,
+                s.Suggestions.Count(), null))
+            .FirstOrDefaultAsync();
+
+        var recentSessions = await db.LunchSessions
+            .AsNoTracking()
+            .Where(s => s.TeamId == teamId && s.State == SessionState.Decided)
+            .OrderByDescending(s => s.DecidedAt)
+            .Take(5)
+            .Select(s => new SessionDto(
+                s.Id, s.State.ToString(), s.Deadline, s.StartedAt,
+                s.Suggestions.Count(),
+                s.WinnerSuggestionId != null
+                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
+                        .Select(sg => sg.Restaurant.Name).FirstOrDefault()
+                    : null))
+            .ToListAsync();
+
+        return Results.Ok(new DashboardResponse(teamDetail, activeSession, recentSessions));
     }
 }
