@@ -5,7 +5,7 @@
 **Primary area:** backend
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §4
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
