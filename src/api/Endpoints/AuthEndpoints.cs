@@ -35,7 +35,8 @@ public static class AuthEndpoints
         AppDbContext db,
         PasswordHasher hasher,
         IDataProtectionProvider dpProvider,
-        ILoggerFactory loggerFactory)
+        ILoggerFactory loggerFactory,
+        HttpContext ctx)
     {
         if (!IsValidEmail(req.Email))
             return Results.Problem("Invalid email format.", statusCode: 400);
@@ -66,6 +67,15 @@ public static class AuthEndpoints
         var token = protector.Protect(user.Id.ToString());
         loggerFactory.CreateLogger("Auth").LogInformation(
             "Verification token for {Email}: {Token}", user.Email, token);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.DisplayName),
+        };
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 
         return Results.Created("/auth/me", new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue));
     }

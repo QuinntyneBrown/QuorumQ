@@ -14,9 +14,13 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     catchError((err: unknown) => {
       if (err instanceof HttpErrorResponse && err.status === 401) {
         auth.user.set(null);
-        const returnUrl = router.url !== '/auth/sign-in' ? router.url : undefined;
-        const extras = returnUrl ? { queryParams: { return: returnUrl } } : undefined;
-        router.navigate(['/auth/sign-in'], extras);
+        const isHydrationProbe = req.url.endsWith('/auth/me');
+        const isAuthRoute = router.url.startsWith('/auth/');
+        if (!isHydrationProbe && !isAuthRoute) {
+          const returnUrl = router.url !== '/auth/sign-in' ? router.url : undefined;
+          const extras = returnUrl ? { queryParams: { return: returnUrl } } : undefined;
+          router.navigate(['/auth/sign-in'], extras);
+        }
       }
       return throwError(() => err);
     }),
