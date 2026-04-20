@@ -1,68 +1,42 @@
 @use '@angular/material' as mat;
 
-// Primary — Tomato
-$primary-palette: (
-  0: #000000, 10: #410000, 20: #6B1A10, 30: #8F2D21,
-  40: #B34032, 50: #E04F3C, 60: #F06A58, 70: #FF8C7B,
-  80: #FFB4A6, 90: #FFDAD2, 95: #FFEDE8, 99: #FFFBF8, 100: #FFFFFF,
+// ── Primary: Tomato ───────────────────────────────────────────────────────────
+$qq-primary-palette: (
+  50:  #FFDAD2, 100: #FFDAD2, 200: #FFB4A6, 300: #FF8C7B, 400: #F06A58,
+  500: #E04F3C, 600: #B34032, 700: #8F2D21, 800: #6B1A10, 900: #410000,
+  A100: #FFEDE8, A200: #FFB4A6, A400: #F06A58, A700: #8F2D21,
   contrast: (
-    0: white, 10: white, 20: white, 30: white, 40: white,
-    50: white, 60: black, 70: black, 80: black, 90: black,
-    95: black, 99: black, 100: black
+    50: #410000, 100: #410000, 200: #410000, 300: #410000, 400: #FFFFFF,
+    500: #FFFFFF, 600: #FFFFFF, 700: #FFFFFF, 800: #FFFFFF, 900: #FFFFFF,
+    A100: #410000, A200: #410000, A400: #FFFFFF, A700: #FFFFFF,
   )
 );
 
-// Secondary — Herb
-$secondary-palette: (
-  10: #072014, 20: #183528, 30: #2E4A3C,
-  40: #4C8B6B, 50: #5D9D7B, 60: #6FA98A, 70: #8AC4A4,
-  80: #A6E0BF, 90: #C2FCDB, 95: #DFFFEB, 100: #FFFFFF,
+// ── Secondary: Herb ───────────────────────────────────────────────────────────
+$qq-secondary-palette: (
+  50:  #C2FCDB, 100: #C2FCDB, 200: #A6E0BF, 300: #8AC4A4, 400: #6FA98A,
+  500: #4C8B6B, 600: #2E4A3C, 700: #183528, 800: #072014, 900: #072014,
+  A100: #DFFFEB, A200: #A6E0BF, A400: #6FA98A, A700: #2E4A3C,
   contrast: (
-    10: white, 20: white, 30: white, 40: white, 50: white,
-    60: black, 70: black, 80: black, 90: black, 95: black, 100: black
+    50: #072014, 100: #072014, 200: #072014, 300: #072014, 400: #FFFFFF,
+    500: #FFFFFF, 600: #FFFFFF, 700: #FFFFFF, 800: #FFFFFF, 900: #FFFFFF,
+    A100: #072014, A200: #072014, A400: #FFFFFF, A700: #FFFFFF,
   )
 );
 
-// Tertiary — Amber
-$tertiary-palette: (
-  10: #2B1700, 20: #462A00, 30: #6B4300,
-  40: #8F5B00, 50: #F2B134, 60: #FFC660, 70: #FFD580,
-  80: #FFDDA0, 90: #FFEFD1, 95: #FFF7E8, 100: #FFFFFF,
+// ── Tertiary: Amber ───────────────────────────────────────────────────────────
+$qq-tertiary-palette: (
+  50:  #FFEFD1, 100: #FFEFD1, 200: #FFDDA0, 300: #FFD580, 400: #FFC660,
+  500: #F2B134, 600: #8F5B00, 700: #6B4300, 800: #462A00, 900: #2B1700,
+  A100: #FFF7E8, A200: #FFDDA0, A400: #FFC660, A700: #6B4300,
   contrast: (
-    10: white, 20: white, 30: white, 40: white, 50: black,
-    60: black, 70: black, 80: black, 90: black, 95: black, 100: black
+    50: #2B1700, 100: #2B1700, 200: #2B1700, 300: #2B1700, 400: #2B1700,
+    500: #2B1700, 600: #FFFFFF, 700: #FFFFFF, 800: #FFFFFF, 900: #FFFFFF,
+    A100: #2B1700, A200: #2B1700, A400: #2B1700, A700: #FFFFFF,
   )
 );
 
-// Neutral (warm)
-$neutral-palette: (
-  0: #000000, 4: #0E0D0B, 6: #141312, 10: #1C1B19, 12: #201F1D,
-  17: #2B2A27, 20: #312F2C, 22: #36342F, 24: #3A3834,
-  30: #4A4742, 40: #63605A, 50: #7C7872, 60: #948F8A,
-  70: #AEA9A4, 80: #C9C4BE, 87: #DCD7D1, 90: #E5E1DB,
-  92: #EAE6E0, 94: #F0ECE6, 95: #F3EFE9, 96: #F5F1EB,
-  98: #FBF7F1, 100: #FFFFFF,
-  contrast: (
-    0: white, 10: white, 20: white, 30: white, 40: white,
-    50: white, 60: black, 70: black, 80: black, 90: black, 100: black
-  )
-);
-
-// Neutral-variant
-$neutral-variant-palette: (
-  30: #4E4944, 50: #7E7871, 60: #98928C, 80: #CDC7C0, 90: #EAE2DB,
-  100: #FFFFFF,
-  contrast: (
-    30: white, 50: white, 60: black, 80: black, 90: black, 100: black
-  )
-);
-
-// Error — Material 3 default
-$error-palette: (
-  10: #410E0B, 20: #601410, 30: #8C1D18,
-  40: #B3261E, 80: #F2B8B5, 90: #F9DEDC, 100: #FFFFFF,
-  contrast: (
-    10: white, 20: white, 30: white, 40: white,
-    80: black, 90: black, 100: black
-  )
-);
+// ── Material palette objects ──────────────────────────────────────────────────
+$qq-primary:   mat.m2-define-palette($qq-primary-palette, 500, 100, 700);
+$qq-secondary: mat.m2-define-palette($qq-secondary-palette, 500, 100, 700);
+$qq-warn:      mat.m2-define-palette(mat.$m2-red-palette);

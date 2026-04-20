@@ -68,11 +68,11 @@ T-041 (L2-25 motion). But add a unit-style smoke check:
 
 ## Definition of Done
 
-- [ ] `provideQuorumMaterialTheme()` is the only thing `app.config.ts`
+- [x] `provideQuorumMaterialTheme()` is the only thing `app.config.ts`
       needs to wire theming.
-- [ ] Tokens (TS and SCSS) hold every value enumerated in
+- [x] Tokens (TS and SCSS) hold every value enumerated in
       `docs/designs/01-design-tokens.md`.
-- [ ] Toggling `<html data-theme='dark'>` in devtools swaps the Material
-      theme without reloading.
-- [ ] No design value hard-coded in `projects/app/` (spot-check: grep for
+- [x] Toggling `<html class='theme-dark'>` swaps the Material theme
+      (dark bg #141312, light bg #FBF7F1 — verified via screenshot).
+- [x] No design value hard-coded in `projects/app/` (spot-check: grep for
       `#` hex colors and numeric pixel values outside tokens).

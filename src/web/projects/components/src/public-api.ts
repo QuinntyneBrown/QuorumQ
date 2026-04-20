@@ -1,5 +1,7 @@
 /*
- * Public API Surface of components — filled by T-005 and T-006
+ * Public API Surface of components
  */
 
 export * from './lib/components';
+export { provideQuorumMaterialTheme } from './lib/theme/theme.provider';
+export * from './lib/tokens/design-tokens';

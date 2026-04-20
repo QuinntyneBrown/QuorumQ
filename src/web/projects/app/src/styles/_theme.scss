@@ -1,1 +1,34 @@
-// Angular Material light + dark palettes — filled by T-005
+@use '@angular/material' as mat;
+@use '../../../components/src/lib/theme/light-theme' as lt;
+@use '../../../components/src/lib/theme/dark-theme' as dt;
+
+@include mat.core();
+
+// Light theme (default)
+html {
+  @include mat.all-component-themes(lt.$qq-light-theme);
+  color-scheme: light;
+}
+
+// Dark theme — toggled via <html class="theme-dark">
+html.theme-dark {
+  @include mat.all-component-colors(dt.$qq-dark-theme);
+  color-scheme: dark;
+  background-color: #141312;
+  color: #E5E1DB;
+}
+
+// Semantic aliases (L2-24 — product code references intention, not mechanism)
+:root {
+  --qq-color-brand:              var(--mdc-theme-primary, #E04F3C);
+  --qq-color-surface-elevated:   var(--mat-app-surface-container-high, #EAE6E0);
+  --qq-color-winner-accent:      #F2B134;
+  --qq-color-state-suggesting:   var(--mdc-theme-secondary, #4C8B6B);
+  --qq-color-state-voting:       var(--mdc-theme-primary, #E04F3C);
+  --qq-color-state-decided:      #F2B134;
+  --qq-color-state-cancelled:    #7E7871;
+  --qq-color-online-dot:         var(--mdc-theme-secondary, #4C8B6B);
+  --qq-color-offline-dot:        #7E7871;
+  --qq-color-danger-text:        #B3261E;
+  --qq-color-divider:            #CDC7C0;
+}
