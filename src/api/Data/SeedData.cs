@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using QuorumQ.Api.Models;
 
 namespace QuorumQ.Api.Data;
@@ -12,7 +13,7 @@ public static class SeedData
         {
             Id = Guid.Parse("11111111-0000-0000-0000-000000000001"),
             Email = "alice@example.com",
-            PasswordHash = "SEED_PLACEHOLDER",
+            PasswordHash = HashPassword("Password1!"),
             DisplayName = "Alice Demo",
             EmailVerifiedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
@@ -21,7 +22,7 @@ public static class SeedData
         {
             Id = Guid.Parse("11111111-0000-0000-0000-000000000002"),
             Email = "bob@example.com",
-            PasswordHash = "SEED_PLACEHOLDER",
+            PasswordHash = HashPassword("Password1!"),
             DisplayName = "Bob Demo",
             EmailVerifiedAt = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
@@ -83,5 +84,12 @@ public static class SeedData
         );
 
         context.SaveChanges();
+    }
+
+    private static string HashPassword(string password)
+    {
+        byte[] salt = RandomNumberGenerator.GetBytes(16);
+        byte[] hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, 100_000, HashAlgorithmName.SHA256, 32);
+        return $"pbkdf2${Convert.ToBase64String(salt)}${Convert.ToBase64String(hash)}";
     }
 }
