@@ -5,6 +5,7 @@
 **Primary area:** backend
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §4 (`Auth/TeamMembershipPolicy.cs`)
+**Status:** Open
 
 ## Goal
 

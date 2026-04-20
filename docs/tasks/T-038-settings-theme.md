@@ -5,6 +5,7 @@
 **Primary area:** full stack (frontend-heavy)
 **Design refs:** `docs/designs/10-screens-settings.md`, `docs/designs/02-theming.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/settings/`), `core/theme/`
+**Status:** Open
 
 ## Goal
 

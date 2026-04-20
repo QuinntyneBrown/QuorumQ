@@ -5,6 +5,7 @@
 **Primary area:** frontend + e2e
 **Design refs:** `docs/designs/15-accessibility.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (core/a11y), §6 (support/a11y.ts)
+**Status:** Open
 
 ## Goal
 

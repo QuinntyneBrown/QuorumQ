@@ -5,6 +5,7 @@
 **Primary area:** frontend (app)
 **Design refs:** `docs/designs/04-layout-navigation.md`, `docs/designs/14-motion.md`
 **Folder structure:** `docs/folder-structure.md` §5.1
+**Status:** Open
 
 ## Goal
 

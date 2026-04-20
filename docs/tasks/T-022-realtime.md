@@ -5,6 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/12-errors-empty-states.md`, `docs/designs/13-notifications.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Hubs/SessionHub.cs`), §5.1 (`core/realtime/`)
+**Status:** Open
 
 ## Goal
 

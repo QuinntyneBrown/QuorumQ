@@ -5,6 +5,7 @@
 **Primary area:** frontend (app + components)
 **Design refs:** `docs/designs/13-notifications.md`, `docs/designs/11-dialogs.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/notifications/`)
+**Status:** Open
 
 ## Goal
 

@@ -5,6 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/06-screens-team.md`, `docs/designs/11-dialogs.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/teams/`), §4 (`Endpoints/TeamEndpoints.cs`)
+**Status:** Open
 
 ## Goal
 

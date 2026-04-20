@@ -5,7 +5,9 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/08-screens-restaurant.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/ReviewEndpoints.cs`), §5.1 (`features/reviews/`)
+**Status:** Open
 **Folder structure:** Open
+**Status:** Open
 
 ## Goal
 

@@ -5,6 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/04-layout-navigation.md`, `docs/designs/06-screens-team.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/teams/team-switcher.component.ts`)
+**Status:** Open
 
 ## Goal
 
