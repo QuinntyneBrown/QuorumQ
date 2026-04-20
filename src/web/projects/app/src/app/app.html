@@ -1,1 +1,70 @@
-<router-outlet />
+<div class="app-shell" [attr.data-layout]="layout()">
+
+  <!-- Top app bar -->
+  <mat-toolbar class="app-bar" color="primary">
+    <span class="app-bar__brand">QuorumQ</span>
+    <span class="app-bar__spacer"></span>
+    <button mat-icon-button [matMenuTriggerFor]="accountMenu" aria-label="Account menu">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+    <mat-menu #accountMenu="matMenu">
+      <button mat-menu-item routerLink="/settings">
+        <mat-icon>settings</mat-icon>Settings
+      </button>
+      <button mat-menu-item routerLink="/auth/sign-out">
+        <mat-icon>logout</mat-icon>Sign out
+      </button>
+      <button mat-menu-item>
+        <mat-icon>info</mat-icon>About
+      </button>
+    </mat-menu>
+  </mat-toolbar>
+
+  <!-- Body: rail (md+) + content -->
+  <div class="app-body">
+
+    <!-- Navigation rail — tablet & desktop -->
+    @if (isTabletOrAbove) {
+      <nav class="nav-rail" aria-label="Primary navigation" data-testid="nav-rail">
+        @for (item of navItems; track item.path) {
+          <a
+            [routerLink]="item.path"
+            routerLinkActive="nav-rail__item--active"
+            class="nav-rail__item"
+            [matTooltip]="item.label"
+            matTooltipPosition="right"
+            [attr.aria-label]="item.label"
+          >
+            <mat-icon>{{ item.icon }}</mat-icon>
+            @if (layout() === 'desktop') {
+              <span class="nav-rail__label">{{ item.label }}</span>
+            }
+          </a>
+        }
+      </nav>
+    }
+
+    <!-- Page content -->
+    <main class="app-content" id="main-content" tabindex="-1">
+      <router-outlet />
+    </main>
+  </div>
+
+  <!-- Bottom navigation — mobile -->
+  @if (isMobile) {
+    <nav class="bottom-nav" aria-label="Primary navigation" data-testid="bottom-nav">
+      @for (item of navItems; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="bottom-nav__item--active"
+          class="bottom-nav__item"
+          [attr.aria-label]="item.label"
+        >
+          <mat-icon class="bottom-nav__icon">{{ item.icon }}</mat-icon>
+          <span class="bottom-nav__label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+  }
+
+</div>

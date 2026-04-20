@@ -16,6 +16,7 @@ export default defineConfig({
     baseURL: process.env['WEB_BASE_URL'] ?? 'http://localhost:4200',
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
+    colorScheme: 'light',
   },
   projects: [
     {

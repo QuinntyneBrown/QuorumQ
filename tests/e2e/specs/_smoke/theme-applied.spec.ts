@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('[smoke] root element has a Material theme class applied', async ({ page }) => {
-  await page.goto('http://localhost:4200');
+  await page.goto('/');
   const bg = await page.evaluate(() =>
     getComputedStyle(document.documentElement).backgroundColor
   );
