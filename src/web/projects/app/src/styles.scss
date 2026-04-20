@@ -6,7 +6,25 @@
 html, body {
   height: 100%;
   margin: 0;
-  font-family: "Inter", ui-sans-serif, system-ui, sans-serif;
+  font-family: "Inter", "Roboto", ui-sans-serif, system-ui, sans-serif;
+}
+
+.material-icons,
+.material-symbols-outlined,
+mat-icon.mat-icon {
+  font-family: 'Material Icons', 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
 }
 
 // Focus-visible ring (L2-23, L2-27)
