@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/SessionEndpoints.cs`), §5.1 (`features/sessions/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -64,9 +64,9 @@ exists, the member is taken to it instead of creating a duplicate.
 
 ## Definition of Done
 
-- [ ] Failing Playwright spec added first; passes on all browsers.
-- [ ] Atomic "one active per team per day" enforced at the DB level.
-- [ ] Deadline slider clamps to 5–180 min and shows the absolute time as
+- [x] Failing Playwright spec added first; passes on all browsers.
+- [x] Atomic "one active per team per day" enforced at the DB level.
+- [x] Deadline slider clamps to 5–180 min and shows the absolute time as
       helper text.
-- [ ] Session page loads without errors for all states (empty slots for
+- [x] Session page loads without errors for all states (empty slots for
       not-yet-implemented features).

@@ -14,6 +14,12 @@ export const routes: Routes = [
       import('./features/auth/auth.routes').then(m => m.authRoutes),
   },
   {
+    path: 'teams/:teamId/sessions',
+    canActivate: [authGuard],
+    loadChildren: () =>
+      import('./features/sessions/sessions.routes').then(m => m.sessionsRoutes),
+  },
+  {
     path: 'teams',
     canActivate: [authGuard],
     loadChildren: () =>
@@ -24,12 +30,6 @@ export const routes: Routes = [
     canActivate: [authGuard],
     loadComponent: () =>
       import('./features/teams/accept-invite.page').then(m => m.AcceptInvitePage),
-  },
-  {
-    path: 'teams/:teamId/sessions',
-    canActivate: [authGuard],
-    loadChildren: () =>
-      import('./features/sessions/sessions.routes').then(m => m.sessionsRoutes),
   },
   {
     path: 'history',

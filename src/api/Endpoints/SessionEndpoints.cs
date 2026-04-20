@@ -8,16 +8,26 @@ namespace QuorumQ.Api.Endpoints;
 
 public static class SessionEndpoints
 {
-    private record StartSessionRequest(DateTime? Deadline);
-    private record SessionSummary(Guid Id, string State, DateTime Deadline, DateTime StartedAt);
+    private record StartSessionRequest(int DeadlineMinutes = 45);
+
+    private record SessionDetail(
+        Guid Id, string TeamId, string State, DateTime Deadline, DateTime StartedAt,
+        int SuggestionCount, string? WinnerName);
 
     public static IEndpointRouteBuilder MapSessionEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/teams/{teamId:guid}/sessions")
+        var teamGroup = app.MapGroup("/teams/{teamId:guid}/sessions")
             .WithTags("Sessions")
             .RequireAuthorization();
 
-        group.MapPost("/", StartSession).RequireTeamMembership(MembershipRole.Admin);
+        teamGroup.MapPost("/", StartSession).RequireTeamMembership(MembershipRole.Admin);
+        teamGroup.MapGet("/{sessionId:guid}", GetSession).RequireTeamMembership();
+
+        var sessionGroup = app.MapGroup("/sessions")
+            .WithTags("Sessions")
+            .RequireAuthorization();
+
+        sessionGroup.MapDelete("/{sessionId:guid}", DeleteSession);
 
         return app;
     }
@@ -31,19 +41,30 @@ public static class SessionEndpoints
         var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
 
-        var existing = await db.LunchSessions
-            .AnyAsync(s => s.TeamId == teamId &&
-                      (s.State == SessionState.Suggesting || s.State == SessionState.Voting));
-        if (existing)
-            return Results.Problem("A session is already active.", statusCode: 409);
+        if (req.DeadlineMinutes < 5 || req.DeadlineMinutes > 180)
+            return Results.ValidationProblem(new Dictionary<string, string[]>
+            {
+                ["deadlineMinutes"] = ["Deadline must be between 5 and 180 minutes."]
+            });
 
-        var deadline = req.Deadline ?? DateTime.UtcNow.AddMinutes(30);
+        var existing = await db.LunchSessions
+            .AsNoTracking()
+            .Where(s => s.TeamId == teamId &&
+                   (s.State == SessionState.Suggesting || s.State == SessionState.Voting))
+            .Select(s => new SessionDetail(
+                s.Id, s.TeamId.ToString(), s.State.ToString(), s.Deadline, s.StartedAt,
+                s.Suggestions.Count(), null))
+            .FirstOrDefaultAsync();
+
+        if (existing is not null)
+            return Results.Ok(existing);
+
         var session = new LunchSession
         {
             Id = Guid.NewGuid(),
             TeamId = teamId,
             State = SessionState.Suggesting,
-            Deadline = deadline,
+            Deadline = DateTime.UtcNow.AddMinutes(req.DeadlineMinutes),
             StartedBy = userId,
             StartedAt = DateTime.UtcNow,
         };
@@ -53,6 +74,52 @@ public static class SessionEndpoints
 
         return Results.Created(
             $"/teams/{teamId}/sessions/{session.Id}",
-            new SessionSummary(session.Id, session.State.ToString(), session.Deadline, session.StartedAt));
+            new SessionDetail(session.Id, teamId.ToString(), session.State.ToString(),
+                session.Deadline, session.StartedAt, 0, null));
+    }
+
+    private static async Task<IResult> GetSession(
+        Guid teamId,
+        Guid sessionId,
+        AppDbContext db)
+    {
+        var session = await db.LunchSessions
+            .AsNoTracking()
+            .Where(s => s.Id == sessionId && s.TeamId == teamId)
+            .Select(s => new SessionDetail(
+                s.Id, s.TeamId.ToString(), s.State.ToString(), s.Deadline, s.StartedAt,
+                s.Suggestions.Count(),
+                s.WinnerSuggestionId != null
+                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
+                        .Select(sg => sg.Restaurant.Name).FirstOrDefault()
+                    : null))
+            .FirstOrDefaultAsync();
+
+        return session is null ? Results.NotFound() : Results.Ok(session);
+    }
+
+    private static async Task<IResult> DeleteSession(
+        Guid sessionId,
+        HttpContext ctx,
+        AppDbContext db)
+    {
+        var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
+
+        var session = await db.LunchSessions
+            .Include(s => s.Team)
+            .ThenInclude(t => t.Memberships)
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+
+        if (session is null) return Results.NotFound();
+
+        var membership = session.Team.Memberships.FirstOrDefault(m => m.UserId == userId);
+        if (membership is null || (membership.Role != MembershipRole.Admin && membership.Role != MembershipRole.Owner))
+            return Results.Forbid();
+
+        db.LunchSessions.Remove(session);
+        await db.SaveChangesAsync();
+
+        return Results.NoContent();
     }
 }
