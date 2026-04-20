@@ -6,6 +6,7 @@
 **Design refs:** `docs/designs/03-components.md`, `docs/designs/11-dialogs.md`,
 `docs/designs/12-errors-empty-states.md`, `docs/designs/16-icons-imagery.md`
 **Folder structure:** `docs/folder-structure.md` §5.2
+**Status:** Open
 
 ## Goal
 

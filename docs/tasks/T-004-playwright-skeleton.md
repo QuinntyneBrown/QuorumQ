@@ -7,6 +7,7 @@ task itself can start in parallel with them.
 **Primary area:** e2e
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §6
+**Status:** Open
 
 ## Goal
 

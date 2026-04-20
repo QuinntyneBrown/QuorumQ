@@ -5,6 +5,7 @@
 **Primary area:** frontend
 **Design refs:** `docs/designs/README.md`, `docs/designs/02-theming.md`
 **Folder structure:** `docs/folder-structure.md` §5
+**Status:** Open
 
 ## Goal
 
