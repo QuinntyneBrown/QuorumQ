@@ -5,7 +5,7 @@
 **Primary area:** frontend
 **Design refs:** `docs/designs/README.md`, `docs/designs/02-theming.md`
 **Folder structure:** `docs/folder-structure.md` §5
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -72,12 +72,12 @@ components only — no `NgModule` declarations.
 
 ## Definition of Done
 
-- [ ] `ng build app` and `ng build components` both succeed.
-- [ ] `ng serve app` renders an empty shell without errors.
-- [ ] Only two projects exist in `angular.json`: `app` and `components`.
-- [ ] No `NgModule` declarations anywhere (grep `@NgModule` returns nothing
+- [x] `ng build app` and `ng build components` both succeed.
+- [x] `ng serve app` renders an empty shell without errors.
+- [x] Only two projects exist in `angular.json`: `app` and `components`.
+- [x] No `NgModule` declarations anywhere (grep `@NgModule` returns nothing
       in `projects/`).
-- [ ] `openapi-typescript` generator configured; running it against T-002's
+- [x] `openapi-typescript` generator configured; running it against T-002's
       OpenAPI emits types into the gitignored folder.
-- [ ] Path aliases `@app/*` and `@components` resolve in both `app` and
+- [x] Path aliases `@app/*` and `@components` resolve in both `app` and
       build output.
