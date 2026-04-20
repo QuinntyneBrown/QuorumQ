@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/06-screens-team.md`, `docs/designs/11-dialogs.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/teams/`), §4 (`Endpoints/TeamEndpoints.cs`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -54,9 +54,9 @@ team dashboard.
 
 ## Definition of Done
 
-- [ ] Failing Playwright spec added first; passes across all browser
+- [x] Failing Playwright spec added first; passes across all browser
       projects.
-- [ ] `POST /teams` rejected for unverified users (contract from T-012).
-- [ ] Team create page renders correctly at 375 px (thumb-reachable).
-- [ ] Zero axe critical/serious violations.
-- [ ] Owner membership created atomically with the team (transactional).
+- [x] `POST /teams` rejected for unverified users (contract from T-012).
+- [x] Team create page renders correctly at 375 px (thumb-reachable).
+- [x] Zero axe critical/serious violations.
+- [x] Owner membership created atomically with the team (transactional).

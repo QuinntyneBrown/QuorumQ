@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService } from './core/auth/auth.service';
+import { SessionStore } from './core/auth/session.store';
 
 type Layout = 'mobile' | 'tablet' | 'desktop';
 
@@ -43,6 +44,7 @@ interface NavItem {
 export class App {
   private readonly bp = inject(BreakpointObserver);
   private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
 
   readonly navItems: NavItem[] = [
@@ -77,8 +79,14 @@ export class App {
 
   signOut(): void {
     this.auth.signOut().subscribe({
-      next: () => this.router.navigate(['/auth/sign-in']),
-      error: () => this.router.navigate(['/auth/sign-in']),
+      next: () => {
+        this.session.clearUser();
+        this.router.navigate(['/auth/sign-in']);
+      },
+      error: () => {
+        this.session.clearUser();
+        this.router.navigate(['/auth/sign-in']);
+      },
     });
   }
 }

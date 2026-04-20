@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ButtonComponent } from '@components';
 import { AuthService } from '../../core/auth/auth.service';
+import { SessionStore } from '../../core/auth/session.store';
 import { NotificationService } from '../notifications/notification.service';
 
 @Component({
@@ -120,6 +121,7 @@ import { NotificationService } from '../notifications/notification.service';
 export class SignInPage implements OnDestroy {
   private readonly fb = inject(FormBuilder);
   private readonly auth = inject(AuthService);
+  private readonly session = inject(SessionStore);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
   private readonly notifications = inject(NotificationService);
@@ -141,8 +143,9 @@ export class SignInPage implements OnDestroy {
     this.loading.set(true);
 
     this.auth.signIn(email!, password!).subscribe({
-      next: () => {
+      next: user => {
         this.loading.set(false);
+        this.session.setUser(user);
         const lastTeam = this.auth.getLastTeam();
         const returnUrl = this.route.snapshot.queryParamMap.get('return');
         const dest = returnUrl ?? (lastTeam ? `/teams/${lastTeam}` : '/teams');
