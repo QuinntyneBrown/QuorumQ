@@ -5,7 +5,7 @@
 **Primary area:** infra
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §2
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -42,11 +42,11 @@ subsequent skeleton tasks (T-002, T-003, T-004).
 
 ## Definition of Done
 
-- [ ] Repo root matches `docs/folder-structure.md` §2 exactly.
-- [ ] `npm run` shows only the three umbrella scripts (`dev`, `build`,
+- [x] Repo root matches `docs/folder-structure.md` §2 exactly.
+- [x] `npm run` shows only the three umbrella scripts (`dev`, `build`,
       `test:e2e`).
-- [ ] No dependency declared at the root `package.json`.
-- [ ] CI workflow files exist and parse (stubs allowed).
-- [ ] No new top-level folder beyond `src/`, `tests/`, `docs/`, `.github/`
+- [x] No dependency declared at the root `package.json`.
+- [x] CI workflow files exist and parse (stubs allowed).
+- [x] No new top-level folder beyond `src/`, `tests/`, `docs/`, `.github/`
       (L2-48).
 
