@@ -3,18 +3,19 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 
-import { QqButtonComponent } from '@components';
-import { QqCardComponent } from '@components';
-import { QqSessionCardComponent } from '@components';
-import { QqCountdownComponent } from '@components';
-import { QqVoteTallyComponent } from '@components';
-import { QqWinnerRevealComponent } from '@components';
-import { QqAvatarComponent } from '@components';
-import { QqPresenceIndicatorComponent } from '@components';
-import { QqEmptyStateComponent } from '@components';
 import {
-  QqConfirmDialogComponent,
-  QqConfirmDialogData,
+  ButtonComponent,
+  CardComponent,
+  SessionCardComponent,
+  CountdownComponent,
+  VoteTallyComponent,
+  VoteEntry,
+  WinnerRevealComponent,
+  AvatarComponent,
+  PresenceIndicatorComponent,
+  EmptyStateComponent,
+  ConfirmDialogComponent,
+  ConfirmDialogData,
 } from '@components';
 
 @Component({
@@ -23,15 +24,15 @@ import {
   imports: [
     CommonModule,
     MatDialogModule,
-    QqButtonComponent,
-    QqCardComponent,
-    QqSessionCardComponent,
-    QqCountdownComponent,
-    QqVoteTallyComponent,
-    QqWinnerRevealComponent,
-    QqAvatarComponent,
-    QqPresenceIndicatorComponent,
-    QqEmptyStateComponent,
+    ButtonComponent,
+    CardComponent,
+    SessionCardComponent,
+    CountdownComponent,
+    VoteTallyComponent,
+    WinnerRevealComponent,
+    AvatarComponent,
+    PresenceIndicatorComponent,
+    EmptyStateComponent,
   ],
   template: `
     @if (visible()) {
@@ -76,17 +77,14 @@ import {
           <h2>Countdown</h2>
           <div class="gallery__row">
             <qq-countdown [deadline]="futureDeadline" (ended)="onCountdownEnd()"></qq-countdown>
-            <qq-countdown [deadline]="null"></qq-countdown>
           </div>
         </section>
 
         <!-- 5. Vote Tally -->
         <section class="gallery__section">
           <h2>Vote Tally</h2>
-          <div style="max-width: 320px; display: flex; flex-direction: column; gap: 12px;">
-            <qq-vote-tally label="Option A" [votes]="7" [total]="10"></qq-vote-tally>
-            <qq-vote-tally label="Option B" [votes]="3" [total]="10"></qq-vote-tally>
-            <qq-vote-tally label="Empty" [votes]="0" [total]="10"></qq-vote-tally>
+          <div style="max-width: 320px;">
+            <qq-vote-tally [votes]="voteTallyEntries"></qq-vote-tally>
           </div>
         </section>
 
@@ -190,7 +188,13 @@ export class GalleryPageComponent implements OnInit {
 
   readonly visible = signal(false);
 
-  @ViewChild('winnerReveal') winnerReveal!: QqWinnerRevealComponent;
+  @ViewChild('winnerReveal') winnerReveal!: WinnerRevealComponent;
+
+  readonly voteTallyEntries: VoteEntry[] = [
+    { label: 'Option A', votes: 7 },
+    { label: 'Option B', votes: 3 },
+    { label: 'Empty', votes: 0 },
+  ];
 
   readonly sessionStatuses: Array<'suggesting' | 'voting' | 'decided' | 'cancelled'> = [
     'suggesting',
@@ -216,7 +220,7 @@ export class GalleryPageComponent implements OnInit {
   }
 
   openDialog(destructive: boolean): void {
-    const data: QqConfirmDialogData = {
+    const data: ConfirmDialogData = {
       title: destructive ? 'Delete Session' : 'Confirm Action',
       message: destructive
         ? 'This action is irreversible. The session and all its data will be permanently deleted.'
@@ -225,7 +229,7 @@ export class GalleryPageComponent implements OnInit {
     };
 
     this.dialog
-      .open(QqConfirmDialogComponent, { data, width: '400px' })
+      .open(ConfirmDialogComponent, { data, width: '400px' })
       .afterClosed()
       .subscribe(result => {
         console.log('[Gallery] Dialog result:', result);

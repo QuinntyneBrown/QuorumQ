@@ -70,9 +70,9 @@ Page object: `tests/e2e/pages/components/app-shell.component.ts` exposes
 
 ## Definition of Done
 
-- [ ] All four browser projects pass the new L2-21 / L2-22 specs.
-- [ ] Shell is composed from `@components` primitives and Material
+- [x] All four browser projects pass the new L2-21 / L2-22 specs.
+- [x] Shell is composed from `@components` primitives and Material
       components — no ad-hoc CSS beyond tokens (L2-24).
-- [ ] No `NgModule` introduced; all components standalone (L2-45).
-- [ ] `BreakpointObserver` is the single source of truth for layout
+- [x] No `NgModule` introduced; all components standalone (L2-45).
+- [x] `BreakpointObserver` is the single source of truth for layout
       switching (no `@media` hacks in TS).
