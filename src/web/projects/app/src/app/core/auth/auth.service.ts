@@ -1,66 +1,67 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, tap } from 'rxjs';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
-export interface User {
+export interface UserSummary {
   id: string;
   email: string;
   displayName: string;
-  avatarUrl?: string | null;
-  emailVerified: boolean;
+  avatarUrl?: string;
+  emailVerifiedAt?: string | null;
 }
-
-interface SignUpRequest { email: string; password: string; displayName: string; }
-interface SignInRequest { email: string; password: string; }
-
-const LAST_TEAM_KEY = 'qq_last_team';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly base = environment.apiBaseUrl;
+  private readonly baseUrl = `${environment.apiBaseUrl}/auth`;
 
-  readonly user = signal<User | null>(null);
+  readonly user = signal<UserSummary | null>(null);
 
-  setLastTeam(teamId: string): void {
-    localStorage.setItem(LAST_TEAM_KEY, teamId);
-  }
-
-  getLastTeam(): string | null {
-    return localStorage.getItem(LAST_TEAM_KEY);
-  }
-
-  clearLastTeam(): void {
-    localStorage.removeItem(LAST_TEAM_KEY);
-  }
-
-  signUp(email: string, password: string, displayName: string): Observable<User> {
-    return this.http.post<User>(`${this.base}/auth/sign-up`, { email, password, displayName } satisfies SignUpRequest);
-  }
-
-  signIn(email: string, password: string): Observable<User> {
-    return this.http.post<User>(`${this.base}/auth/sign-in`, { email, password } satisfies SignInRequest, { withCredentials: true }).pipe(
-      tap(u => this.user.set(u)),
+  async signUp(email: string, password: string, displayName: string): Promise<UserSummary> {
+    const result = await firstValueFrom(
+      this.http.post<UserSummary>(`${this.baseUrl}/sign-up`, { email, password, displayName },
+        { withCredentials: true })
     );
+    this.user.set(result);
+    return result;
   }
 
-  signOut(): Observable<void> {
-    return this.http.post<void>(`${this.base}/auth/sign-out`, {}, { withCredentials: true }).pipe(
-      tap(() => {
+  async signIn(email: string, password: string): Promise<UserSummary> {
+    const result = await firstValueFrom(
+      this.http.post<UserSummary>(`${this.baseUrl}/sign-in`, { email, password },
+        { withCredentials: true })
+    );
+    this.user.set(result);
+    return result;
+  }
+
+  async signOut(): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${this.baseUrl}/sign-out`, {}, { withCredentials: true })
+    );
+    this.user.set(null);
+  }
+
+  async loadMe(): Promise<UserSummary | null> {
+    try {
+      const result = await firstValueFrom(
+        this.http.get<UserSummary>(`${this.baseUrl}/me`, { withCredentials: true })
+      );
+      this.user.set(result);
+      return result;
+    } catch (err) {
+      if (err instanceof HttpErrorResponse && err.status === 401) {
         this.user.set(null);
-        this.clearLastTeam();
-      }),
-    );
+      }
+      return null;
+    }
   }
 
-  me(): Observable<User> {
-    return this.http.get<User>(`${this.base}/auth/me`, { withCredentials: true }).pipe(
-      tap(u => this.user.set(u)),
+  async verifyEmail(token: string): Promise<void> {
+    await firstValueFrom(
+      this.http.post(`${this.baseUrl}/verify-email`, { token }, { withCredentials: true })
     );
-  }
-
-  verifyEmail(token: string): Observable<void> {
-    return this.http.post<void>(`${this.base}/auth/verify-email`, { token }, { withCredentials: true });
+    await this.loadMe();
   }
 }

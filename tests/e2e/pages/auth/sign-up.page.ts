@@ -8,10 +8,7 @@ export class SignUpPage extends BasePage {
 
   async goto(): Promise<void> {
     await this.page.goto('/auth/sign-up');
-  }
-
-  async fillDisplayName(name: string): Promise<void> {
-    await this.page.getByTestId('display-name-input').fill(name);
+    await this.page.waitForSelector('[data-testid="sign-up-form"]');
   }
 
   async fillEmail(email: string): Promise<void> {
@@ -22,20 +19,28 @@ export class SignUpPage extends BasePage {
     await this.page.getByTestId('password-input').fill(password);
   }
 
-  async submit(): Promise<void> {
-    await this.page.getByTestId('submit-button').click();
+  async fillDisplayName(name: string): Promise<void> {
+    await this.page.getByTestId('display-name-input').fill(name);
   }
 
-  async expectValidationError(field: 'displayName' | 'email' | 'password', message: string): Promise<void> {
-    await expect(this.page.getByText(message)).toBeVisible();
+  async submit(): Promise<void> {
+    await this.page.getByRole('button', { name: 'Create account' }).click();
+  }
+
+  async expectValidationError(field: string, message: string): Promise<void> {
+    await expect(this.page.getByTestId(`${field}-error`)).toContainText(message);
+  }
+
+  async expectServerError(message: string): Promise<void> {
+    await expect(this.page.getByTestId('server-error')).toContainText(message);
   }
 
   async expectSubmitDisabled(): Promise<void> {
-    await expect(this.page.getByTestId('submit-button')).toBeDisabled();
+    await expect(this.page.getByRole('button', { name: 'Create account' })).toBeDisabled();
   }
 
   async expectSubmitEnabled(): Promise<void> {
-    await expect(this.page.getByTestId('submit-button')).not.toBeDisabled();
+    await expect(this.page.getByRole('button', { name: 'Create account' })).not.toBeDisabled();
   }
 
   async expectPasswordRule(rule: string, met: boolean): Promise<void> {
