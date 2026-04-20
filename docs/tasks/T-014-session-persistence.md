@@ -5,7 +5,7 @@
 **Primary area:** full stack (frontend-heavy)
 **Design refs:** `docs/designs/05-screens-auth.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`core/auth/session.store.ts`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
