@@ -27,6 +27,15 @@ if (builder.Environment.IsDevelopment())
 
 var app = builder.Build();
 
+// Apply migrations and seed on startup in Development
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    db.Database.Migrate();
+    SeedData.Initialize(db);
+}
+
 app.UseExceptionHandler();
 app.UseCors();
 

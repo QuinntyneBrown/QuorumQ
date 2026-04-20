@@ -6,7 +6,7 @@ L2-44, L2-47, L2-48
 **Primary area:** backend (data)
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §4 (`Data/`, `Models/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -89,9 +89,9 @@ only when a requirement demands coverage that E2E cannot reach").
 
 ## Definition of Done
 
-- [ ] `dotnet ef migrations add Initial -p src/api` produces the migration.
-- [ ] `dotnet ef database update` creates the schema from a clean DB.
-- [ ] SeedData populates two users, a team, and a decided session in Dev.
-- [ ] Unique indexes enforce one vote and one review per user per session.
-- [ ] No `Services/`, `Repositories/`, or pipeline abstractions introduced
+- [x] `dotnet ef migrations add Initial -p src/api` produces the migration.
+- [x] `dotnet ef database update` creates the schema from a clean DB.
+- [x] SeedData populates two users, a team, and a decided session in Dev.
+- [x] Unique indexes enforce one vote and one review per user per session.
+- [x] No `Services/`, `Repositories/`, or pipeline abstractions introduced
       (L2-47).
