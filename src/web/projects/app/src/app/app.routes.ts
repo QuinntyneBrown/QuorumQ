@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { environment } from '../environments/environment';
+import { authGuard } from './core/auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -14,21 +15,25 @@ export const routes: Routes = [
   },
   {
     path: 'teams',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('./features/teams/teams.routes').then(m => m.teamsRoutes),
   },
   {
     path: 'teams/:teamId/sessions',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('./features/sessions/sessions.routes').then(m => m.sessionsRoutes),
   },
   {
     path: 'history',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('./features/history/history.routes').then(m => m.historyRoutes),
   },
   {
     path: 'settings',
+    canActivate: [authGuard],
     loadChildren: () =>
       import('./features/settings/settings.routes').then(m => m.settingsRoutes),
   },

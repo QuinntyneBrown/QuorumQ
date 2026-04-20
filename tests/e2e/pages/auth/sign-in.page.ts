@@ -30,4 +30,11 @@ export class SignInPage extends BasePage {
   async expectAccountMenuVisible(): Promise<void> {
     await expect(this.page.getByRole('button', { name: /account menu/i })).toBeVisible();
   }
+
+  async returnsToRouteAfterReauth(route: string, email: string, password: string): Promise<void> {
+    await expect(this.page).toHaveURL(/sign-in/);
+    await expect(this.page).toHaveURL(new RegExp(`return=.*${encodeURIComponent(route)}`));
+    await this.signIn({ email, password });
+    await expect(this.page).toHaveURL(new RegExp(route.replace(/\//g, '\\/')));
+  }
 }

@@ -5,7 +5,7 @@
 **Primary area:** full stack (frontend-heavy)
 **Design refs:** `docs/designs/05-screens-auth.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`core/auth/session.store.ts`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -58,10 +58,10 @@ simulate reload and restart deterministically.
 
 ## Definition of Done
 
-- [ ] Spec passes across all four browser projects.
-- [ ] Reload with the cookie present does NOT bounce through the sign-in
+- [x] Spec passes across all four browser projects.
+- [x] Reload with the cookie present does NOT bounce through the sign-in
       screen.
-- [ ] Session expiry navigates to sign-in with `return` query param; after
+- [x] Session expiry navigates to sign-in with `return` query param; after
       re-auth, the original route resumes.
-- [ ] No token stored in `localStorage` or `sessionStorage` (only
+- [x] No token stored in `localStorage` or `sessionStorage` (only
       `lastTeamId` / UI prefs) — cookie is the only credential (L2-42).
