@@ -1,6 +1,10 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using QuorumQ.Api.Auth;
 using QuorumQ.Api.Data;
 using QuorumQ.Api.Endpoints;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +21,36 @@ builder.Services.AddCors(options =>
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=quorumq.db"));
+
+var authOpts = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(opts =>
+    {
+        opts.Cookie.HttpOnly = true;
+        opts.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        opts.Cookie.SameSite = SameSiteMode.Lax;
+        opts.SlidingExpiration = true;
+        opts.ExpireTimeSpan = TimeSpan.FromDays(authOpts.SessionLifetimeDays);
+        opts.Events.OnRedirectToLogin = ctx => { ctx.Response.StatusCode = 401; return Task.CompletedTask; };
+        opts.Events.OnRedirectToAccessDenied = ctx => { ctx.Response.StatusCode = 403; return Task.CompletedTask; };
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddRateLimiter(opts =>
+{
+    opts.AddPolicy("auth-signin", ctx =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = authOpts.RateLimitAttempts,
+                Window = TimeSpan.FromMinutes(authOpts.RateLimitWindowMinutes),
+                QueueLimit = 0,
+            }));
+    opts.RejectionStatusCode = 429;
+});
 
 if (builder.Environment.IsDevelopment())
 {
@@ -51,6 +85,9 @@ else
 }
 
 app.UseHttpsRedirection();
+app.UseRateLimiter();
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapHub<QuorumQ.Api.Hubs.SessionHub>("/hubs/session");
 
@@ -68,3 +105,5 @@ app.MapReviewEndpoints();
 app.MapHistoryEndpoints();
 
 app.Run();
+
+public partial class Program { }

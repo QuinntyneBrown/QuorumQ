@@ -5,7 +5,7 @@
 **Primary area:** backend
 **Design refs:** `docs/designs/05-screens-auth.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/AuthEndpoints.cs`, `Auth/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
