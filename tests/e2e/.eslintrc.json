@@ -1,0 +1,27 @@
+{
+  "root": true,
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["no-restricted-syntax"],
+  "overrides": [
+    {
+      "files": ["specs/**/*.ts"],
+      "rules": {
+        "no-restricted-syntax": [
+          "error",
+          {
+            "selector": "MemberExpression[object.name='page'][property.name='locator']",
+            "message": "Use Page Object methods instead of raw page.locator() in specs."
+          },
+          {
+            "selector": "MemberExpression[object.name='page'][property.name='$']",
+            "message": "Use Page Object methods instead of raw page.$() in specs."
+          },
+          {
+            "selector": "MemberExpression[object.name='page'][property.name='$$']",
+            "message": "Use Page Object methods instead of raw page.$$() in specs."
+          }
+        ]
+      }
+    }
+  ]
+}
