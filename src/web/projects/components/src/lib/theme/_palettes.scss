@@ -1,0 +1,68 @@
+@use '@angular/material' as mat;
+
+// Primary — Tomato
+$primary-palette: (
+  0: #000000, 10: #410000, 20: #6B1A10, 30: #8F2D21,
+  40: #B34032, 50: #E04F3C, 60: #F06A58, 70: #FF8C7B,
+  80: #FFB4A6, 90: #FFDAD2, 95: #FFEDE8, 99: #FFFBF8, 100: #FFFFFF,
+  contrast: (
+    0: white, 10: white, 20: white, 30: white, 40: white,
+    50: white, 60: black, 70: black, 80: black, 90: black,
+    95: black, 99: black, 100: black
+  )
+);
+
+// Secondary — Herb
+$secondary-palette: (
+  10: #072014, 20: #183528, 30: #2E4A3C,
+  40: #4C8B6B, 50: #5D9D7B, 60: #6FA98A, 70: #8AC4A4,
+  80: #A6E0BF, 90: #C2FCDB, 95: #DFFFEB, 100: #FFFFFF,
+  contrast: (
+    10: white, 20: white, 30: white, 40: white, 50: white,
+    60: black, 70: black, 80: black, 90: black, 95: black, 100: black
+  )
+);
+
+// Tertiary — Amber
+$tertiary-palette: (
+  10: #2B1700, 20: #462A00, 30: #6B4300,
+  40: #8F5B00, 50: #F2B134, 60: #FFC660, 70: #FFD580,
+  80: #FFDDA0, 90: #FFEFD1, 95: #FFF7E8, 100: #FFFFFF,
+  contrast: (
+    10: white, 20: white, 30: white, 40: white, 50: black,
+    60: black, 70: black, 80: black, 90: black, 95: black, 100: black
+  )
+);
+
+// Neutral (warm)
+$neutral-palette: (
+  0: #000000, 4: #0E0D0B, 6: #141312, 10: #1C1B19, 12: #201F1D,
+  17: #2B2A27, 20: #312F2C, 22: #36342F, 24: #3A3834,
+  30: #4A4742, 40: #63605A, 50: #7C7872, 60: #948F8A,
+  70: #AEA9A4, 80: #C9C4BE, 87: #DCD7D1, 90: #E5E1DB,
+  92: #EAE6E0, 94: #F0ECE6, 95: #F3EFE9, 96: #F5F1EB,
+  98: #FBF7F1, 100: #FFFFFF,
+  contrast: (
+    0: white, 10: white, 20: white, 30: white, 40: white,
+    50: white, 60: black, 70: black, 80: black, 90: black, 100: black
+  )
+);
+
+// Neutral-variant
+$neutral-variant-palette: (
+  30: #4E4944, 50: #7E7871, 60: #98928C, 80: #CDC7C0, 90: #EAE2DB,
+  100: #FFFFFF,
+  contrast: (
+    30: white, 50: white, 60: black, 80: black, 90: black, 100: black
+  )
+);
+
+// Error — Material 3 default
+$error-palette: (
+  10: #410E0B, 20: #601410, 30: #8C1D18,
+  40: #B3261E, 80: #F2B8B5, 90: #F9DEDC, 100: #FFFFFF,
+  contrast: (
+    10: white, 20: white, 30: white, 40: white,
+    80: black, 90: black, 100: black
+  )
+);

@@ -26,6 +26,7 @@ yarn-error.log
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/mcp.json
 .history/*
 
 # Miscellaneous
@@ -38,9 +39,9 @@ testem.log
 /typings
 __screenshots__/
 
-# Generated OpenAPI types
-/projects/app/src/app/core/api/generated/
-
 # System files
 .DS_Store
 Thumbs.db
+
+# Generated API types
+/projects/app/src/app/core/api/generated/

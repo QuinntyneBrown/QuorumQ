@@ -1,0 +1,15 @@
+@use '@angular/material' as mat;
+@use './palettes' as p;
+
+$qq-light-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$red-palette,
+    tertiary: mat.$orange-palette,
+  ),
+  typography: (
+    brand-family: 'Fraunces, Inter, ui-sans-serif, serif',
+    plain-family: 'Inter, ui-sans-serif, system-ui, -apple-system, sans-serif',
+  ),
+  density: (scale: 0),
+));

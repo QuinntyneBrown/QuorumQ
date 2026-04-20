@@ -1,0 +1,87 @@
+// Spacing
+$space-0: 0px;
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 20px;
+$space-6: 24px;
+$space-7: 32px;
+$space-8: 40px;
+$space-9: 48px;
+$space-10: 64px;
+$space-12: 96px;
+
+// Border radius
+$radius-none: 0px;
+$radius-xs: 4px;
+$radius-sm: 8px;
+$radius-md: 12px;
+$radius-lg: 16px;
+$radius-xl: 24px;
+$radius-2xl: 28px;
+$radius-full: 9999px;
+
+// Motion durations (ms)
+$motion-short-1: 50ms;
+$motion-short-2: 100ms;
+$motion-short-3: 150ms;
+$motion-short-4: 200ms;
+$motion-medium-1: 250ms;
+$motion-medium-2: 300ms;
+$motion-medium-3: 350ms;
+$motion-medium-4: 400ms;
+$motion-long-1: 450ms;
+$motion-long-2: 500ms;
+$motion-long-3: 550ms;
+$motion-long-4: 600ms;
+$motion-extra-long-1: 700ms;
+$motion-extra-long-2: 800ms;
+$motion-extra-long-3: 900ms;
+$motion-extra-long-4: 1000ms;
+
+// Motion easing
+$motion-ease-linear: linear;
+$motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+$motion-ease-standard-accel: cubic-bezier(0.3, 0, 1, 1);
+$motion-ease-standard-decel: cubic-bezier(0, 0, 0, 1);
+$motion-ease-emphasized: cubic-bezier(0.2, 0, 0, 1);
+$motion-ease-emphasized-accel: cubic-bezier(0.3, 0, 0.8, 0.15);
+$motion-ease-emphasized-decel: cubic-bezier(0.05, 0.7, 0.1, 1);
+
+// Z-index
+$z-base: 0;
+$z-raised: 1;
+$z-sticky: 10;
+$z-app-bar: 100;
+$z-bottom-nav: 100;
+$z-fab: 110;
+$z-drawer: 200;
+$z-overlay: 900;
+$z-dialog: 1000;
+$z-toast: 1100;
+$z-live-critical: 2000;
+
+// Breakpoints
+$bp-xs: 0px;
+$bp-sm: 600px;
+$bp-md: 905px;
+$bp-lg: 1240px;
+$bp-xl: 1440px;
+
+// Icon sizes
+$icon-xs: 16px;
+$icon-sm: 20px;
+$icon-md: 24px;
+$icon-lg: 32px;
+$icon-xl: 40px;
+$icon-hero: 64px;
+
+// Opacity
+$state-hover-opacity: 0.08;
+$state-focus-opacity: 0.12;
+$state-pressed-opacity: 0.12;
+$state-dragged-opacity: 0.16;
+$disabled-container-opacity: 0.12;
+$disabled-content-opacity: 0.38;
+$scrim-opacity: 0.32;
