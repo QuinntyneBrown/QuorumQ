@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/SessionEndpoints.cs`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
