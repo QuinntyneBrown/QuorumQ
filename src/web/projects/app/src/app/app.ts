@@ -11,6 +11,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
 import { AuthService } from './core/auth/auth.service';
 import { SessionStore } from './core/auth/session.store';
+import { TeamSwitcherComponent } from './features/teams/team-switcher.component';
 
 type Layout = 'mobile' | 'tablet' | 'desktop';
 
@@ -33,6 +34,7 @@ interface NavItem {
     MatIconModule,
     MatButtonModule,
     MatMenuModule,
+    TeamSwitcherComponent,
   ],
   templateUrl: './app.html',
   styleUrl: './app.scss',
@@ -44,7 +46,7 @@ interface NavItem {
 export class App {
   private readonly bp = inject(BreakpointObserver);
   private readonly auth = inject(AuthService);
-  private readonly session = inject(SessionStore);
+  readonly session = inject(SessionStore);
   private readonly router = inject(Router);
 
   readonly navItems: NavItem[] = [

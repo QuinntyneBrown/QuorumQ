@@ -4,6 +4,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
+import { SessionStore } from '../../core/auth/session.store';
 
 interface TeamDetail {
   id: string;
@@ -45,12 +46,15 @@ interface TeamDetail {
 export class TeamDashboardPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
+  private readonly session = inject(SessionStore);
 
   readonly team = signal<TeamDetail | null>(null);
 
   ngOnInit(): void {
     const teamId = this.route.snapshot.paramMap.get('teamId');
     if (!teamId) return;
+
+    this.session.lastTeamId.set(teamId);
 
     this.http.get<TeamDetail>(`${environment.apiBaseUrl}/teams/${teamId}`).subscribe({
       next: t => this.team.set(t),

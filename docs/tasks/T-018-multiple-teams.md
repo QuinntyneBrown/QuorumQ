@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/04-layout-navigation.md`, `docs/designs/06-screens-team.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/teams/team-switcher.component.ts`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -52,9 +52,9 @@ one or accept an invite.
 
 ## Definition of Done
 
-- [ ] Switching teams updates the URL, the active-team chip in the app
+- [x] Switching teams updates the URL, the active-team chip in the app
       bar, and any feature pages observing `SessionStore`.
-- [ ] Empty state is keyboard-navigable with a visible focus ring.
-- [ ] Switcher opens with `Enter` / `Space` from the chip.
-- [ ] Active team persists across reloads (stored via `SessionStore`,
+- [x] Empty state is keyboard-navigable with a visible focus ring.
+- [x] Switcher opens with `Enter` / `Space` from the chip.
+- [x] Active team persists across reloads (stored via `SessionStore`,
       hydrated on app bootstrap).

@@ -18,7 +18,8 @@ public static class TeamEndpoints
         Guid OwnerId,
         DateTime CreatedAt,
         string CallerRole,
-        int MemberCount);
+        int MemberCount,
+        int UnreadCount = 0);
 
     public static IEndpointRouteBuilder MapTeamEndpoints(this IEndpointRouteBuilder app)
     {

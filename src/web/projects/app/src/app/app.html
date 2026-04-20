@@ -7,6 +7,9 @@
     </button>
   }
   <span class="app-bar__title">QuorumQ</span>
+  @if (session.user()) {
+    <app-team-switcher />
+  }
   <span class="spacer"></span>
   <button mat-icon-button aria-label="Account menu" [matMenuTriggerFor]="accountMenu">
     <mat-icon>account_circle</mat-icon>
