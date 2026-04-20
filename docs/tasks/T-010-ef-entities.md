@@ -6,7 +6,7 @@ L2-44, L2-47, L2-48
 **Primary area:** backend (data)
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §4 (`Data/`, `Models/`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
