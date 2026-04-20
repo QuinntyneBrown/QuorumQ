@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { environment } from '../environments/environment';
 
 export const routes: Routes = [
   {
@@ -31,6 +32,11 @@ export const routes: Routes = [
     loadChildren: () =>
       import('./features/settings/settings.routes').then(m => m.settingsRoutes),
   },
+  ...(environment.e2eHooks ? [{
+    path: '_test/notify',
+    loadComponent: () =>
+      import('./features/notifications/test-notify.page').then(m => m.TestNotifyPage),
+  }] : []),
   {
     path: '_gallery',
     loadComponent: () =>

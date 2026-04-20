@@ -5,7 +5,7 @@
 **Primary area:** frontend (app + components)
 **Design refs:** `docs/designs/13-notifications.md`, `docs/designs/11-dialogs.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/notifications/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -56,9 +56,9 @@ Page object: `tests/e2e/pages/components/toast.component.ts` with
 
 ## Definition of Done
 
-- [ ] `NotificationService.show` delivers a visual toast AND a live-region
+- [x] `NotificationService.show` delivers a visual toast AND a live-region
       announcement (L2-28 / L2-39).
-- [ ] Feature code never imports `MatSnackBar` directly (grep audit).
-- [ ] Toast position follows design: top on mobile, bottom on desktop.
-- [ ] Deep-link action opens the target route when tapped.
-- [ ] Smoke spec passes on all four browser projects.
+- [x] Feature code never imports `MatSnackBar` directly (grep audit).
+- [x] Toast position follows design: top on mobile, bottom on desktop.
+- [x] Deep-link action opens the target route when tapped.
+- [x] Smoke spec passes on all four browser projects.
