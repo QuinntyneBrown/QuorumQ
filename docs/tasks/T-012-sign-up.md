@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/05-screens-auth.md`, `docs/designs/12-errors-empty-states.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/auth/`), §6 (`specs/auth/`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
