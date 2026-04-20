@@ -7,7 +7,7 @@ path is completed after T-020 merges)
 **Primary area:** frontend (with small backend read-only endpoint)
 **Design refs:** `docs/designs/06-screens-team.md`, `docs/designs/07-screens-session.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/teams/team-dashboard.page.ts`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
