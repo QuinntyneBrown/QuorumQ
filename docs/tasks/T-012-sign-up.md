@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/05-screens-auth.md`, `docs/designs/12-errors-empty-states.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/auth/`), §6 (`specs/auth/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -60,9 +60,9 @@ in-line. Unverified users are prompted to verify before writing actions
 
 ## Definition of Done
 
-- [ ] Failing Playwright spec written first; implementation makes it pass.
-- [ ] Password strength meter prevents submission below threshold (L2-04).
-- [ ] Unverified user trying to create a team (T-016) is prompted to
+- [x] Failing Playwright spec written first; implementation makes it pass.
+- [x] Password strength meter prevents submission below threshold (L2-04).
+- [x] Unverified user trying to create a team (T-016) is prompted to
       verify — cross-task contract documented here for T-016 consumers.
-- [ ] Axe returns zero critical/serious violations on the sign-up page.
-- [ ] Page works at 375 px width with primary action thumb-reachable.
+- [x] Axe returns zero critical/serious violations on the sign-up page.
+- [x] Page works at 375 px width with primary action thumb-reachable.

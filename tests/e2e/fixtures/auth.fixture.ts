@@ -14,3 +14,7 @@ export const test = base.extend<AuthFixture>({
     await apiDelete(`/users/${user.id}`);
   },
 });
+
+export async function createUnverifiedUser(email: string, password = 'Str0ng!Pass99', displayName = 'E2E User'): Promise<void> {
+  await apiPost('/auth/sign-up', { email, password, displayName });
+}
