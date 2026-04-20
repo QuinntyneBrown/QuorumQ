@@ -5,6 +5,7 @@
 **Primary area:** infra
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §2
+**Status:** Assigned
 
 ## Goal
 
@@ -48,3 +49,4 @@ subsequent skeleton tasks (T-002, T-003, T-004).
 - [ ] CI workflow files exist and parse (stubs allowed).
 - [ ] No new top-level folder beyond `src/`, `tests/`, `docs/`, `.github/`
       (L2-48).
+

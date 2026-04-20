@@ -5,6 +5,7 @@
 **Primary area:** frontend (components library + app)
 **Design refs:** `docs/designs/01-design-tokens.md`, `docs/designs/02-theming.md`
 **Folder structure:** `docs/folder-structure.md` §5.2
+**Status:** Open
 
 ## Goal
 
