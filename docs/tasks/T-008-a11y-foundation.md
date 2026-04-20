@@ -5,7 +5,7 @@
 **Primary area:** frontend + e2e
 **Design refs:** `docs/designs/15-accessibility.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (core/a11y), §6 (support/a11y.ts)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -58,10 +58,10 @@ Page object: `tests/e2e/pages/components/skip-link.component.ts`.
 
 ## Definition of Done
 
-- [ ] `expectAccessible()` callable from any page object, fails on critical
+- [x] `expectAccessible()` callable from any page object, fails on critical
       / serious axe violations (L2-27).
-- [ ] `live-announcer.ts` covers both polite and assertive channels (L2-28).
-- [ ] Skip link is the first focusable element on the shell and jumps to
+- [x] `live-announcer.ts` covers both polite and assertive channels (L2-28).
+- [x] Skip link is the first focusable element on the shell and jumps to
       `#main`.
-- [ ] Focus ring visible on every interactive element in the shell (L2-23).
-- [ ] All new specs pass across the four browser projects.
+- [x] Focus ring visible on every interactive element in the shell (L2-23).
+- [x] All new specs pass across the four browser projects.
