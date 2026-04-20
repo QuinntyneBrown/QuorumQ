@@ -32,3 +32,4 @@ appsettings.*.local.json
 # OS
 .DS_Store
 Thumbs.db
+src/api/*.db
