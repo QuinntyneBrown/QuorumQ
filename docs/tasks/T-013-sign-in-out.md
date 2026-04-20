@@ -5,7 +5,7 @@
 **Primary area:** full stack (frontend-heavy)
 **Design refs:** `docs/designs/05-screens-auth.md`, `docs/designs/04-layout-navigation.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/auth/`, `core/auth/`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
