@@ -1,8 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
-import { SessionCardComponent, CountdownComponent, SessionStatus } from '@components';
+import { MatDialog } from '@angular/material/dialog';
+import { SessionCardComponent, CountdownComponent, SessionStatus, ConfirmDialogComponent } from '@components';
+import { SessionStore } from '../../core/auth/session.store';
 import { environment } from '../../../environments/environment';
 
 interface SessionDetail {
@@ -11,6 +13,7 @@ interface SessionDetail {
   state: string;
   deadline: string;
   startedAt: string;
+  startedBy: string;
   suggestionCount: number;
   winnerName?: string;
 }
@@ -27,11 +30,30 @@ interface SessionDetail {
           [title]="sessionTitle()"
           [status]="sessionStatus()"
         >
-          <qq-countdown
-            slot="countdown"
-            [deadline]="session()!.deadline"
-          />
+          @if (isActive()) {
+            <qq-countdown slot="countdown" [deadline]="session()!.deadline" />
+          }
           <div slot="actions">
+            @if (isOrganizer() && session()!.state === 'Suggesting') {
+              <button
+                mat-flat-button
+                color="primary"
+                (click)="startVoting()"
+                data-testid="start-voting-btn"
+              >
+                Start voting
+              </button>
+            }
+            @if (isOrganizer() && isActive()) {
+              <button
+                mat-stroked-button
+                color="warn"
+                (click)="cancelSession()"
+                data-testid="cancel-session-btn"
+              >
+                Cancel session
+              </button>
+            }
             <a
               mat-stroked-button
               [routerLink]="['/teams', session()!.teamId]"
@@ -41,6 +63,12 @@ interface SessionDetail {
             </a>
           </div>
         </qq-session-card>
+
+        @if (isCancelled()) {
+          <div class="cancelled-banner" data-testid="cancelled-banner" role="alert">
+            This session was cancelled.
+          </div>
+        }
 
         <div class="content-slots">
           <section class="slot" data-testid="suggestions-slot">
@@ -65,6 +93,13 @@ interface SessionDetail {
   `,
   styles: [`
     .page-shell { padding: 24px; max-width: 800px; margin: 0 auto; }
+    .cancelled-banner {
+      background: var(--mat-sys-error-container);
+      color: var(--mat-sys-on-error-container);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-top: 16px;
+    }
     .content-slots { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
     .slot { min-height: 4px; }
   `],
@@ -72,20 +107,27 @@ interface SessionDetail {
 export class SessionPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
+  private readonly dialog = inject(MatDialog);
+  private readonly sessionStore = inject(SessionStore);
 
   readonly session = signal<SessionDetail | null>(null);
   readonly notFound = signal(false);
 
-  ngOnInit(): void {
-    const teamId = this.route.snapshot.paramMap.get('teamId') ?? '';
-    const sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';
+  readonly isOrganizer = computed(() => {
+    const s = this.session();
+    const user = this.sessionStore.user();
+    return s !== null && !!user && s.startedBy === user.id;
+  });
 
-    this.http
-      .get<SessionDetail>(`${environment.apiBaseUrl}/teams/${teamId}/sessions/${sessionId}`)
-      .subscribe({
-        next: s => this.session.set(s),
-        error: err => { if (err.status === 404) this.notFound.set(true); },
-      });
+  readonly isActive = computed(() => {
+    const state = this.session()?.state;
+    return state === 'Suggesting' || state === 'Voting';
+  });
+
+  readonly isCancelled = computed(() => this.session()?.state === 'Cancelled');
+
+  ngOnInit(): void {
+    this.loadSession();
   }
 
   sessionTitle(): string {
@@ -96,5 +138,43 @@ export class SessionPage implements OnInit {
 
   sessionStatus(): SessionStatus {
     return (this.session()?.state.toLowerCase() ?? 'suggesting') as SessionStatus;
+  }
+
+  startVoting(): void {
+    const s = this.session();
+    if (!s) return;
+    this.http
+      .post<SessionDetail>(`${environment.apiBaseUrl}/sessions/${s.id}/start-voting`, {})
+      .subscribe({ next: updated => this.session.set(updated), error: () => {} });
+  }
+
+  cancelSession(): void {
+    const s = this.session();
+    if (!s) return;
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Cancel session',
+        message: 'This will end the session and no winner will be declared. Continue?',
+        confirmLabel: 'Cancel session',
+        destructive: true,
+      },
+    });
+    ref.afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      this.http
+        .post<SessionDetail>(`${environment.apiBaseUrl}/sessions/${s.id}/cancel`, {})
+        .subscribe({ next: updated => this.session.set(updated), error: () => {} });
+    });
+  }
+
+  private loadSession(): void {
+    const teamId = this.route.snapshot.paramMap.get('teamId') ?? '';
+    const sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';
+    this.http
+      .get<SessionDetail>(`${environment.apiBaseUrl}/teams/${teamId}/sessions/${sessionId}`)
+      .subscribe({
+        next: s => this.session.set(s),
+        error: err => { if (err.status === 404) this.notFound.set(true); },
+      });
   }
 }

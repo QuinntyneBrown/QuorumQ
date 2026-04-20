@@ -17,4 +17,25 @@ export class SessionPage extends BasePage {
   async expectState(state: string): Promise<void> {
     await expect(this.page.getByTestId('session-card')).toContainText(state, { ignoreCase: true });
   }
+
+  async tapStartVoting(): Promise<void> {
+    await this.page.getByTestId('start-voting-btn').click();
+  }
+
+  async cancelSession(): Promise<void> {
+    await this.page.getByTestId('cancel-session-btn').click();
+    await this.page.getByRole('button', { name: /cancel session/i }).last().click();
+  }
+
+  async expectCancelledBanner(): Promise<void> {
+    await expect(this.page.getByTestId('cancelled-banner')).toBeVisible();
+  }
+
+  async expectStartVotingButton(): Promise<void> {
+    await expect(this.page.getByTestId('start-voting-btn')).toBeVisible();
+  }
+
+  async expectCancelButton(): Promise<void> {
+    await expect(this.page.getByTestId('cancel-session-btn')).toBeVisible();
+  }
 }

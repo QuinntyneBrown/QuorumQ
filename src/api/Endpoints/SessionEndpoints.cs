@@ -12,7 +12,7 @@ public static class SessionEndpoints
 
     private record SessionDetail(
         Guid Id, string TeamId, string State, DateTime Deadline, DateTime StartedAt,
-        int SuggestionCount, string? WinnerName);
+        Guid StartedBy, int SuggestionCount, string? WinnerName);
 
     public static IEndpointRouteBuilder MapSessionEndpoints(this IEndpointRouteBuilder app)
     {
@@ -27,6 +27,8 @@ public static class SessionEndpoints
             .WithTags("Sessions")
             .RequireAuthorization();
 
+        sessionGroup.MapPost("/{sessionId:guid}/start-voting", StartVoting);
+        sessionGroup.MapPost("/{sessionId:guid}/cancel", CancelSession);
         sessionGroup.MapDelete("/{sessionId:guid}", DeleteSession);
 
         return app;
@@ -53,7 +55,7 @@ public static class SessionEndpoints
                    (s.State == SessionState.Suggesting || s.State == SessionState.Voting))
             .Select(s => new SessionDetail(
                 s.Id, s.TeamId.ToString(), s.State.ToString(), s.Deadline, s.StartedAt,
-                s.Suggestions.Count(), null))
+                s.StartedBy, s.Suggestions.Count(), null))
             .FirstOrDefaultAsync();
 
         if (existing is not null)
@@ -75,7 +77,7 @@ public static class SessionEndpoints
         return Results.Created(
             $"/teams/{teamId}/sessions/{session.Id}",
             new SessionDetail(session.Id, teamId.ToString(), session.State.ToString(),
-                session.Deadline, session.StartedAt, 0, null));
+                session.Deadline, session.StartedAt, session.StartedBy, 0, null));
     }
 
     private static async Task<IResult> GetSession(
@@ -88,6 +90,7 @@ public static class SessionEndpoints
             .Where(s => s.Id == sessionId && s.TeamId == teamId)
             .Select(s => new SessionDetail(
                 s.Id, s.TeamId.ToString(), s.State.ToString(), s.Deadline, s.StartedAt,
+                s.StartedBy,
                 s.Suggestions.Count(),
                 s.WinnerSuggestionId != null
                     ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
@@ -96,6 +99,50 @@ public static class SessionEndpoints
             .FirstOrDefaultAsync();
 
         return session is null ? Results.NotFound() : Results.Ok(session);
+    }
+
+    private static async Task<IResult> StartVoting(
+        Guid sessionId,
+        HttpContext ctx,
+        AppDbContext db)
+    {
+        var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
+
+        var session = await db.LunchSessions.FirstOrDefaultAsync(s => s.Id == sessionId);
+        if (session is null) return Results.NotFound();
+        if (session.StartedBy != userId) return Results.Forbid();
+        if (session.State != SessionState.Suggesting)
+            return Results.Problem("Session is not in Suggesting state.", statusCode: 409);
+
+        session.State = SessionState.Voting;
+        await db.SaveChangesAsync();
+
+        return Results.Ok(new SessionDetail(
+            session.Id, session.TeamId.ToString(), session.State.ToString(),
+            session.Deadline, session.StartedAt, session.StartedBy, 0, null));
+    }
+
+    private static async Task<IResult> CancelSession(
+        Guid sessionId,
+        HttpContext ctx,
+        AppDbContext db)
+    {
+        var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
+
+        var session = await db.LunchSessions.FirstOrDefaultAsync(s => s.Id == sessionId);
+        if (session is null) return Results.NotFound();
+        if (session.StartedBy != userId) return Results.Forbid();
+        if (session.State != SessionState.Suggesting && session.State != SessionState.Voting)
+            return Results.Problem("Session is not in an active state.", statusCode: 409);
+
+        session.State = SessionState.Cancelled;
+        await db.SaveChangesAsync();
+
+        return Results.Ok(new SessionDetail(
+            session.Id, session.TeamId.ToString(), session.State.ToString(),
+            session.Deadline, session.StartedAt, session.StartedBy, 0, null));
     }
 
     private static async Task<IResult> DeleteSession(

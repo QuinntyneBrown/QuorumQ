@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/SessionEndpoints.cs`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -62,10 +62,10 @@ may be cancelled.
 
 ## Definition of Done
 
-- [ ] Failing spec added first; passes across all browsers.
-- [ ] Only organizer can transition states (enforced by T-015 policy +
+- [x] Failing spec added first; passes across all browsers.
+- [x] Only organizer can transition states (enforced by T-015 policy +
       session organizer check).
-- [ ] Background worker transitions states within 6 seconds of deadline.
-- [ ] UI reflects state changes without manual reload (via hub — T-022).
-- [ ] Cancelled sessions show a read-only banner and disable all
+- [x] Background worker transitions states within 6 seconds of deadline.
+- [x] UI reflects state changes without manual reload (via hub — T-022).
+- [x] Cancelled sessions show a read-only banner and disable all
       mutations.
