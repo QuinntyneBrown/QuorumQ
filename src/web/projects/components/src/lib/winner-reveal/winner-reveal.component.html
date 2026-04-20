@@ -1,0 +1,11 @@
+@if (revealed()) {
+  <div class="qq-winner-reveal__overlay" (click)="dismiss()">
+    <div class="qq-winner-reveal__card" (click)="$event.stopPropagation()">
+      <p class="qq-winner-reveal__label">Winner</p>
+      <p class="qq-winner-reveal__name">{{ displayName() }}</p>
+      <button class="qq-winner-reveal__dismiss" (click)="dismiss()" aria-label="Dismiss winner reveal">
+        ✕
+      </button>
+    </div>
+  </div>
+}

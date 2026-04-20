@@ -1,0 +1,19 @@
+<div class="qq-vote-tally">
+  <div class="qq-vote-tally__header">
+    <span class="qq-vote-tally__label">{{ label }}</span>
+    <span class="qq-vote-tally__count">{{ votes }}/{{ total }}</span>
+  </div>
+  <div
+    class="qq-vote-tally__track"
+    role="progressbar"
+    [attr.aria-valuenow]="votes"
+    [attr.aria-valuemin]="0"
+    [attr.aria-valuemax]="total"
+    [attr.aria-label]="label + ': ' + percent() + '%'"
+  >
+    <div
+      class="qq-vote-tally__bar"
+      [style.width.%]="percent()"
+    ></div>
+  </div>
+</div>

@@ -1,0 +1,97 @@
+- generic [ref=e4]:
+  - heading "Component Primitives Gallery" [level=1] [ref=e5]
+  - generic [ref=e6]:
+    - heading "Button" [level=2] [ref=e7]
+    - generic [ref=e8]:
+      - button "Filled" [ref=e10]
+      - button "Tonal" [ref=e12]
+      - button "Text" [ref=e14]
+      - generic "Icon button" [ref=e15]:
+        - button [ref=e16] [cursor=pointer]
+      - button "Disabled" [disabled] [ref=e20]
+  - generic [ref=e21]:
+    - heading "Card" [level=2] [ref=e22]
+    - paragraph [ref=e25]: This is a projected card body.
+  - generic [ref=e26]:
+    - heading "Session Card" [level=2] [ref=e27]
+    - generic [ref=e28]:
+      - generic [ref=e30]:
+        - generic [ref=e31]:
+          - generic [ref=e33]: "Session: suggesting"
+          - generic [ref=e34]: suggesting
+        - generic [ref=e37]: —
+        - button "View" [ref=e40]
+      - generic [ref=e42]:
+        - generic [ref=e43]:
+          - generic [ref=e45]: "Session: voting"
+          - generic [ref=e46]: voting
+        - generic [ref=e49]: —
+        - button "View" [ref=e52]
+      - generic [ref=e54]:
+        - generic [ref=e55]:
+          - generic [ref=e57]: "Session: decided"
+          - generic [ref=e58]: decided
+        - generic [ref=e61]: —
+        - button "View" [ref=e64]
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - generic [ref=e69]: "Session: cancelled"
+          - generic [ref=e70]: cancelled
+        - generic [ref=e73]: —
+        - button "View" [ref=e76]
+  - generic [ref=e77]:
+    - heading "Countdown" [level=2] [ref=e78]
+    - generic [ref=e79]:
+      - 'timer "Time remaining: 05:00" [ref=e81]': 05:00
+      - 'timer "Time remaining: 00:00" [ref=e83]': 00:00
+  - generic [ref=e84]:
+    - heading "Vote Tally" [level=2] [ref=e85]
+    - generic [ref=e86]:
+      - generic [ref=e88]:
+        - generic [ref=e89]:
+          - generic [ref=e90]: Option A
+          - generic [ref=e91]: 7/10
+        - 'progressbar "Option A: 70%" [ref=e92]'
+      - generic [ref=e95]:
+        - generic [ref=e96]:
+          - generic [ref=e97]: Option B
+          - generic [ref=e98]: 3/10
+        - 'progressbar "Option B: 30%" [ref=e99]'
+      - generic [ref=e102]:
+        - generic [ref=e103]:
+          - generic [ref=e104]: Empty
+          - generic [ref=e105]: 0/10
+        - 'progressbar "Empty: 0%" [ref=e106]'
+  - generic [ref=e107]:
+    - heading "Winner Reveal" [level=2] [ref=e108]
+    - button "Reveal Winner" [ref=e111]
+  - generic [ref=e112]:
+    - heading "Avatar" [level=2] [ref=e113]
+    - generic [ref=e114]:
+      - generic [ref=e116]: QB
+      - generic [ref=e118]: QB
+      - generic [ref=e120]: QB
+      - img "Alice" [ref=e122]
+      - generic [ref=e124]: BI
+  - generic [ref=e125]:
+    - heading "Presence Indicator" [level=2] [ref=e126]
+    - generic [ref=e127]:
+      - generic [ref=e128]:
+        - status "Online" [ref=e129]
+        - text: Online
+      - generic [ref=e131]:
+        - status "Offline" [ref=e132]
+        - text: Offline
+  - generic [ref=e134]:
+    - heading "Empty State" [level=2] [ref=e135]
+    - generic "Nothing here yet" [ref=e136]:
+      - generic [ref=e137]:
+        - generic [ref=e139]: 📭
+        - heading "Nothing here yet" [level=2] [ref=e140]
+        - paragraph [ref=e141]: Once sessions are created they'll appear here.
+        - button "Get started" [ref=e144]
+  - generic [ref=e145]:
+    - heading "Confirm Dialog" [level=2] [ref=e146]
+    - generic [ref=e147]:
+      - button "Open Dialog" [ref=e149]
+      - button "Destructive Dialog" [ref=e151]

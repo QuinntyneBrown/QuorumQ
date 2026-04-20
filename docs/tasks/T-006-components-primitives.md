@@ -71,13 +71,13 @@ Detailed component behaviour is exercised by the feature specs later.
 
 ## Definition of Done
 
-- [ ] `ng build components` succeeds.
-- [ ] Every component has a sibling `index.ts` exporting the component and
+- [x] `ng build components` succeeds.
+- [x] Every component has a sibling `index.ts` exporting the component and
       its public inputs/outputs.
-- [ ] `public-api.ts` is the single entry point (no deep imports from
+- [x] `public-api.ts` is the single entry point (no deep imports from
       `app/` — checked by path-alias rules from T-003).
-- [ ] No feature-specific types (e.g. `Session`, `Vote`) imported in the
+- [x] No feature-specific types (e.g. `Session`, `Vote`) imported in the
       library (L2-47).
-- [ ] Primitives are keyboard and screen-reader operable — `role`, `aria-*`,
+- [x] Primitives are keyboard and screen-reader operable — `role`, `aria-*`,
       and focus management verified with `expectAccessible()` in the smoke
       spec.

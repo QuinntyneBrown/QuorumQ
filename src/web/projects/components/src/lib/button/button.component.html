@@ -1,0 +1,24 @@
+<ng-container *ngIf="isIcon; else standard">
+  <button
+    mat-icon-button
+    [disabled]="disabled"
+    class="qq-button qq-button--icon"
+    matRipple
+  >
+    <ng-content></ng-content>
+  </button>
+</ng-container>
+
+<ng-template #standard>
+  <button
+    [attr.mat-button]="variant === 'text' ? '' : null"
+    [attr.mat-flat-button]="variant === 'filled' ? '' : null"
+    [attr.mat-tonal-button]="variant === 'tonal' ? '' : null"
+    [disabled]="disabled"
+    class="qq-button"
+    [class]="'qq-button qq-button--' + variant"
+    matRipple
+  >
+    <ng-content></ng-content>
+  </button>
+</ng-template>

@@ -1,0 +1,9 @@
+<div
+  class="qq-countdown"
+  [class.qq-countdown--expired]="isExpired()"
+  [class.qq-countdown--reduced]="prefersReducedMotion"
+  role="timer"
+  [attr.aria-label]="'Time remaining: ' + display()"
+>
+  <span class="qq-countdown__display">{{ display() }}</span>
+</div>

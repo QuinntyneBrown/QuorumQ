@@ -1,0 +1,12 @@
+<div class="qq-empty-state">
+  <div class="qq-empty-state__illustration">
+    <ng-content select="[slot=illustration]"></ng-content>
+  </div>
+  <h2 class="qq-empty-state__title">{{ title }}</h2>
+  @if (description) {
+    <p class="qq-empty-state__description">{{ description }}</p>
+  }
+  <div class="qq-empty-state__cta">
+    <ng-content select="[slot=cta]"></ng-content>
+  </div>
+</div>

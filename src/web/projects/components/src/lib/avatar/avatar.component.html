@@ -1,0 +1,10 @@
+@if (showImg()) {
+  <img
+    class="qq-avatar__img"
+    [src]="src"
+    [alt]="name"
+    (error)="onImgError()"
+  />
+} @else {
+  <span class="qq-avatar__initials" aria-hidden="true">{{ initials() }}</span>
+}
