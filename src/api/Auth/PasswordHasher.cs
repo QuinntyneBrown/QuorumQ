@@ -1,28 +1,24 @@
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
 
 namespace QuorumQ.Api.Auth;
 
-public static class PasswordHasher
+public class PasswordHasher
 {
-    private const int SaltSize = 16;
-    private const int HashSize = 32;
-    private const int Iterations = 100_000;
-    private static readonly HashAlgorithmName Algorithm = HashAlgorithmName.SHA256;
-
-    public static string Hash(string password)
+    public string Hash(string password)
     {
-        byte[] salt = RandomNumberGenerator.GetBytes(SaltSize);
-        byte[] hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, Algorithm, HashSize);
+        byte[] salt = RandomNumberGenerator.GetBytes(16);
+        byte[] hash = KeyDerivation.Pbkdf2(password, salt, KeyDerivationPrf.HMACSHA256, 100_000, 32);
         return $"pbkdf2${Convert.ToBase64String(salt)}${Convert.ToBase64String(hash)}";
     }
 
-    public static bool Verify(string password, string stored)
+    public bool Verify(string password, string storedHash)
     {
-        var parts = stored.Split('$');
+        var parts = storedHash.Split('$');
         if (parts.Length != 3 || parts[0] != "pbkdf2") return false;
         byte[] salt = Convert.FromBase64String(parts[1]);
-        byte[] storedHash = Convert.FromBase64String(parts[2]);
-        byte[] hash = Rfc2898DeriveBytes.Pbkdf2(password, salt, Iterations, Algorithm, HashSize);
-        return CryptographicOperations.FixedTimeEquals(hash, storedHash);
+        byte[] expectedHash = Convert.FromBase64String(parts[2]);
+        byte[] actualHash = KeyDerivation.Pbkdf2(password, salt, KeyDerivationPrf.HMACSHA256, 100_000, 32);
+        return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);
     }
 }

@@ -1,12 +1,12 @@
+using System.Security.Claims;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using QuorumQ.Api.Auth;
 using QuorumQ.Api.Data;
 using QuorumQ.Api.Models;
-using System.Security.Claims;
 
 namespace QuorumQ.Api.Endpoints;
 
@@ -18,135 +18,133 @@ public static class AuthEndpoints
 
         group.MapPost("/sign-up", SignUp);
         group.MapPost("/sign-in", SignIn).RequireRateLimiting("auth-signin");
-        group.MapPost("/sign-out", (Delegate)SignOut).RequireAuthorization();
-        group.MapGet("/me", GetMe).RequireAuthorization();
-        group.MapPost("/verify-email", VerifyEmail).RequireAuthorization();
+        group.MapPost("/sign-out", (Delegate)SignOut);
+        group.MapGet("/me", Me).RequireAuthorization();
+        group.MapPost("/verify-email", VerifyEmail);
 
         return app;
     }
 
-    private static async Task<IResult> SignUp(
-        [FromBody] SignUpRequest req,
+    record SignUpRequest(string Email, string Password, string DisplayName);
+    record SignInRequest(string Email, string Password);
+    record VerifyEmailRequest(string Token);
+    record UserSummary(Guid Id, string Email, string DisplayName, string? AvatarUrl, bool EmailVerified);
+
+    static async Task<IResult> SignUp(
+        SignUpRequest req,
         AppDbContext db,
-        HttpContext ctx,
-        CancellationToken ct)
+        PasswordHasher hasher,
+        IDataProtectionProvider dpProvider,
+        ILoggerFactory loggerFactory)
     {
         if (!IsValidEmail(req.Email))
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-                { ["email"] = ["Invalid email format."] });
+            return Results.Problem("Invalid email format.", statusCode: 400);
 
-        if (req.Password.Length < 10)
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-                { ["password"] = ["Password must be at least 10 characters."] });
+        if (!IsValidPassword(req.Password))
+            return Results.Problem(
+                "Password must be at least 10 characters and include uppercase, lowercase, digit, and special character.",
+                statusCode: 400);
 
-        if (!HasRequiredComplexity(req.Password))
-            return Results.ValidationProblem(new Dictionary<string, string[]>
-                { ["password"] = ["Password must include letters, numbers, and special characters."] });
-
-        var email = req.Email.Trim().ToLowerInvariant();
-
-        if (await db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == email, ct))
-            return Results.Conflict(new ProblemDetails { Detail = "Email already registered." });
+        var normalised = req.Email.ToLowerInvariant();
+        if (await db.Users.AnyAsync(u => u.Email == normalised))
+            return Results.Problem("Email already in use.", statusCode: 409);
 
         var user = new User
         {
             Id = Guid.NewGuid(),
-            Email = email,
-            PasswordHash = PasswordHasher.Hash(req.Password),
-            DisplayName = req.DisplayName.Trim(),
+            Email = normalised,
+            PasswordHash = hasher.Hash(req.Password),
+            DisplayName = req.DisplayName,
             CreatedAt = DateTime.UtcNow,
         };
+
         db.Users.Add(user);
-        await db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync();
 
-        await SignInUser(ctx, user);
+        // Stub: log verification token (T-012 surfaces actual email sending)
+        var protector = dpProvider.CreateProtector("email-verify");
+        var token = protector.Protect(user.Id.ToString());
+        loggerFactory.CreateLogger("Auth").LogInformation(
+            "Verification token for {Email}: {Token}", user.Email, token);
 
-        return Results.Created("/auth/me", UserSummary.From(user));
+        return Results.Created("/auth/me", new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue));
     }
 
-    private static async Task<IResult> SignIn(
-        [FromBody] SignInRequest req,
+    static async Task<IResult> SignIn(
+        SignInRequest req,
         AppDbContext db,
-        HttpContext ctx,
-        CancellationToken ct)
+        PasswordHasher hasher,
+        HttpContext ctx)
     {
-        var email = req.Email.Trim().ToLowerInvariant();
-        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email, ct);
+        var normalised = req.Email.ToLowerInvariant();
+        var user = await db.Users.FirstOrDefaultAsync(u => u.Email == normalised);
 
-        if (user == null || !PasswordHasher.Verify(req.Password, user.PasswordHash))
-            return Results.Problem(statusCode: 401, detail: "Invalid credentials.");
+        if (user == null || !hasher.Verify(req.Password, user.PasswordHash))
+            return Results.Unauthorized();
 
-        await SignInUser(ctx, user);
-        return Results.Ok(UserSummary.From(user));
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+            new Claim(ClaimTypes.Email, user.Email),
+            new Claim(ClaimTypes.Name, user.DisplayName),
+        };
+        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+        await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
+
+        return Results.Ok(new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue));
     }
 
-    private static async Task<IResult> SignOut(HttpContext ctx)
+    static async Task<IResult> SignOut(HttpContext ctx)
     {
         await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return Results.NoContent();
     }
 
-    private static async Task<IResult> GetMe(HttpContext ctx, AppDbContext db, CancellationToken ct)
+    static async Task<IResult> Me(HttpContext ctx, AppDbContext db)
     {
-        var idClaim = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (idClaim == null || !Guid.TryParse(idClaim, out var userId))
+        var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
             return Results.Unauthorized();
 
-        var user = await db.Users.FindAsync([userId], ct);
+        var user = await db.Users.FindAsync(userId);
         if (user == null) return Results.Unauthorized();
 
-        return Results.Ok(UserSummary.From(user));
+        return Results.Ok(new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue));
     }
 
-    private static async Task<IResult> VerifyEmail(
-        [FromBody] VerifyEmailRequest req,
+    static async Task<IResult> VerifyEmail(
+        VerifyEmailRequest req,
         AppDbContext db,
-        HttpContext ctx,
-        CancellationToken ct)
+        IDataProtectionProvider dpProvider)
     {
-        var idClaim = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (idClaim == null || !Guid.TryParse(idClaim, out var userId))
-            return Results.Unauthorized();
-
-        var user = await db.Users.FindAsync([userId], ct);
-        if (user == null) return Results.Unauthorized();
-
-        user.EmailVerifiedAt = DateTime.UtcNow;
-        await db.SaveChangesAsync(ct);
-
-        return Results.NoContent();
-    }
-
-    private static Task SignInUser(HttpContext ctx, User user)
-    {
-        var claims = new List<Claim>
+        try
         {
-            new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new(ClaimTypes.Email, user.Email),
-            new(ClaimTypes.Name, user.DisplayName),
-        };
-        var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-        var principal = new ClaimsPrincipal(identity);
-        return ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+            var protector = dpProvider.CreateProtector("email-verify");
+            var userIdStr = protector.Unprotect(req.Token);
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Results.Problem("Invalid token.", statusCode: 400);
+
+            var user = await db.Users.FindAsync(userId);
+            if (user == null) return Results.Problem("Invalid token.", statusCode: 400);
+            if (user.EmailVerifiedAt.HasValue) return Results.Ok();
+
+            user.EmailVerifiedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync();
+            return Results.Ok();
+        }
+        catch
+        {
+            return Results.Problem("Invalid token.", statusCode: 400);
+        }
     }
 
-    private static bool IsValidEmail(string email)
-    {
-        try { _ = new System.Net.Mail.MailAddress(email); return true; }
-        catch { return false; }
-    }
+    static bool IsValidEmail(string email) =>
+        Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
 
-    private static bool HasRequiredComplexity(string password) =>
-        password.Any(char.IsLetter) &&
+    static bool IsValidPassword(string password) =>
+        password.Length >= 10 &&
+        password.Any(char.IsUpper) &&
+        password.Any(char.IsLower) &&
         password.Any(char.IsDigit) &&
         password.Any(c => !char.IsLetterOrDigit(c));
-}
-
-public record SignUpRequest(string Email, string Password, string DisplayName);
-public record SignInRequest(string Email, string Password);
-public record VerifyEmailRequest(string Token);
-
-public record UserSummary(Guid Id, string Email, string DisplayName, string? AvatarUrl, DateTime? EmailVerifiedAt)
-{
-    public static UserSummary From(User u) => new(u.Id, u.Email, u.DisplayName, u.AvatarUrl, u.EmailVerifiedAt);
 }

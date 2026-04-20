@@ -71,12 +71,12 @@ Keep the tests project minimal — add it only if not already present.
 
 ## Definition of Done
 
-- [ ] `POST /auth/sign-up`, `/sign-in`, `/sign-out`, `GET /auth/me`
+- [x] `POST /auth/sign-up`, `/sign-in`, `/sign-out`, `GET /auth/me`
       documented in `/swagger` (Dev only — L2-44).
-- [ ] Password hashes use a modern KDF with per-user salt; plaintext never
+- [x] Password hashes use a modern KDF with per-user salt; plaintext never
       persisted (L2-42).
-- [ ] `auth-signin` rate limiter returns 429 after 5 failed attempts
+- [x] `auth-signin` rate limiter returns 429 after 5 failed attempts
       (L2-05).
-- [ ] HTTPS redirection on in all environments; HSTS on outside Dev
+- [x] HTTPS redirection on in all environments; HSTS on outside Dev
       (L2-42).
-- [ ] Cookie is `HttpOnly`, `Secure`, `SameSite=Lax` (L2-42, L2-06).
+- [x] Cookie is `HttpOnly`, `Secure`, `SameSite=Lax` (L2-42, L2-06).

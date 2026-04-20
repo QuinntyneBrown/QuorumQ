@@ -22,18 +22,32 @@ builder.Services.AddCors(options =>
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Default") ?? "Data Source=quorumq.db"));
 
-var authOpts = builder.Configuration.GetSection(AuthOptions.SectionName).Get<AuthOptions>() ?? new AuthOptions();
+builder.Services.AddScoped<PasswordHasher>();
+
+var authOpts = builder.Configuration.GetSection(AuthOptions.Section).Get<AuthOptions>() ?? new AuthOptions();
+builder.Services.AddSingleton(authOpts);
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(opts =>
     {
+        opts.Cookie.Name = ".QuorumQ.Auth";
         opts.Cookie.HttpOnly = true;
-        opts.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        opts.Cookie.SecurePolicy = builder.Environment.IsProduction()
+            ? CookieSecurePolicy.Always
+            : CookieSecurePolicy.SameAsRequest;
         opts.Cookie.SameSite = SameSiteMode.Lax;
         opts.SlidingExpiration = true;
         opts.ExpireTimeSpan = TimeSpan.FromDays(authOpts.SessionLifetimeDays);
-        opts.Events.OnRedirectToLogin = ctx => { ctx.Response.StatusCode = 401; return Task.CompletedTask; };
-        opts.Events.OnRedirectToAccessDenied = ctx => { ctx.Response.StatusCode = 403; return Task.CompletedTask; };
+        opts.Events.OnRedirectToLogin = ctx =>
+        {
+            ctx.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            return Task.CompletedTask;
+        };
+        opts.Events.OnRedirectToAccessDenied = ctx =>
+        {
+            ctx.Response.StatusCode = StatusCodes.Status403Forbidden;
+            return Task.CompletedTask;
+        };
     });
 
 builder.Services.AddAuthorization();
@@ -42,14 +56,15 @@ builder.Services.AddRateLimiter(opts =>
 {
     opts.AddPolicy("auth-signin", ctx =>
         RateLimitPartition.GetFixedWindowLimiter(
-            partitionKey: ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
-            factory: _ => new FixedWindowRateLimiterOptions
+            ctx.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+            _ => new FixedWindowRateLimiterOptions
             {
-                PermitLimit = authOpts.RateLimitAttempts,
+                PermitLimit = authOpts.RateLimitMaxAttempts,
                 Window = TimeSpan.FromMinutes(authOpts.RateLimitWindowMinutes),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0,
             }));
-    opts.RejectionStatusCode = 429;
+    opts.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
 });
 
 if (builder.Environment.IsDevelopment())
@@ -66,8 +81,11 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-    SeedData.Initialize(db);
+    if (db.Database.IsRelational())
+    {
+        db.Database.Migrate();
+        SeedData.Initialize(db);
+    }
 }
 
 app.UseExceptionHandler();
@@ -85,9 +103,9 @@ else
 }
 
 app.UseHttpsRedirection();
-app.UseRateLimiter();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseRateLimiter();
 
 app.MapHub<QuorumQ.Api.Hubs.SessionHub>("/hubs/session");
 
