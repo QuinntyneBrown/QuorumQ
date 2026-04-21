@@ -1,15 +1,19 @@
 import { Component, inject, Input, OnInit, OnDestroy, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { MatChipsModule } from '@angular/material/chips';
-import { AvatarComponent, CardComponent } from '@components';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatDialog } from '@angular/material/dialog';
+import { AvatarComponent, CardComponent, ConfirmDialogComponent } from '@components';
 import { SessionHubClient } from '../../core/realtime/session-hub.client';
+import { SessionStore } from '../../core/auth/session.store';
 import { environment } from '../../../environments/environment';
 import type { SuggestionDto } from './suggest-restaurant.component';
 
 @Component({
   selector: 'app-suggestion-list',
   standalone: true,
-  imports: [MatChipsModule, AvatarComponent, CardComponent],
+  imports: [MatChipsModule, MatButtonModule, MatIconModule, AvatarComponent, CardComponent],
   template: `
     @if (suggestions().length === 0) {
       <p class="empty" data-testid="no-suggestions">No suggestions yet. Be the first!</p>
@@ -25,6 +29,17 @@ import type { SuggestionDto } from './suggest-restaurant.component';
                     <mat-chip-set>
                       <mat-chip>{{ s.cuisine }}</mat-chip>
                     </mat-chip-set>
+                  }
+                  @if (canWithdraw(s)) {
+                    <button
+                      mat-icon-button
+                      class="withdraw-btn"
+                      [attr.data-testid]="'withdraw-btn-' + s.id"
+                      aria-label="Withdraw suggestion"
+                      (click)="confirmWithdraw(s)"
+                    >
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
                   }
                 </div>
                 @if (s.address) {
@@ -56,6 +71,7 @@ import type { SuggestionDto } from './suggest-restaurant.component';
     .card-body { padding: 12px 16px; }
     .restaurant-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
     .restaurant-name { font-weight: 600; font-size: 16px; }
+    .withdraw-btn { margin-left: auto; color: var(--mat-sys-error); }
     .address { font-size: 13px; color: var(--mat-sys-on-surface-variant); margin: 4px 0; }
     .website { font-size: 13px; color: var(--mat-sys-primary); display: block; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .meta { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; color: var(--mat-sys-on-surface-variant); }
@@ -64,11 +80,39 @@ import type { SuggestionDto } from './suggest-restaurant.component';
 })
 export class SuggestionListComponent implements OnInit, OnDestroy {
   @Input({ required: true }) sessionId!: string;
+  @Input() sessionState = '';
 
   private readonly http = inject(HttpClient);
   private readonly hub = inject(SessionHubClient);
+  private readonly dialog = inject(MatDialog);
+  private readonly sessionStore = inject(SessionStore);
 
   readonly suggestions = signal<SuggestionDto[]>([]);
+
+  canWithdraw(s: SuggestionDto): boolean {
+    const userId = this.sessionStore.user()?.id;
+    return this.sessionState === 'Suggesting' && !!userId && s.suggestedBy === userId;
+  }
+
+  confirmWithdraw(s: SuggestionDto): void {
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        title: 'Withdraw suggestion',
+        message: `Remove "${s.restaurantName}" from this session?`,
+        confirmLabel: 'Withdraw',
+        destructive: true,
+      },
+    });
+    ref.afterClosed().subscribe(confirmed => {
+      if (!confirmed) return;
+      this.http
+        .delete(`${environment.apiBaseUrl}/sessions/${this.sessionId}/suggestions/${s.id}`)
+        .subscribe({
+          next: () => this.suggestions.update(list => list.filter(x => x.id !== s.id)),
+          error: () => {},
+        });
+    });
+  }
 
   ngOnInit(): void {
     this.loadSuggestions();

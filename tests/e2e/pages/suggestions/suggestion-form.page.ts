@@ -42,4 +42,13 @@ export class SuggestionFormPage {
   async selectAutocomplete(name: string): Promise<void> {
     await this.page.locator('mat-option').filter({ hasText: name }).click();
   }
+
+  async withdrawOwnSuggestion(suggestionId: string): Promise<void> {
+    await this.page.getByTestId(`withdraw-btn-${suggestionId}`).click();
+    await this.page.getByRole('button', { name: 'Withdraw' }).click();
+  }
+
+  async expectNoWithdrawOption(suggestionId: string): Promise<void> {
+    await expect(this.page.getByTestId(`withdraw-btn-${suggestionId}`)).not.toBeVisible();
+  }
 }

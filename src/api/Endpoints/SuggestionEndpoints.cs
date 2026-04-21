@@ -30,6 +30,7 @@ public static class SuggestionEndpoints
 
         group.MapPost("/", AddSuggestion);
         group.MapGet("/", GetSuggestions);
+        group.MapDelete("/{suggestionId:guid}", WithdrawSuggestion);
 
         var teamGroup = app.MapGroup("/teams/{teamId:guid}/restaurants")
             .WithTags("Suggestions")
@@ -133,6 +134,38 @@ public static class SuggestionEndpoints
             .SuggestionAdded(responseDto);
 
         return Results.Created($"/sessions/{sessionId}/suggestions/{suggestion.Id}", responseDto);
+    }
+
+    private static async Task<IResult> WithdrawSuggestion(
+        Guid sessionId,
+        Guid suggestionId,
+        HttpContext ctx,
+        AppDbContext db,
+        IHubContext<SessionHub, ISessionHubClient> hub)
+    {
+        var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
+
+        var session = await db.LunchSessions.AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == sessionId);
+        if (session is null) return Results.NotFound();
+
+        if (session.State != SessionState.Suggesting)
+            return Results.Problem("Suggestions can only be withdrawn during the Suggesting phase.", statusCode: 409);
+
+        var suggestion = await db.Suggestions
+            .FirstOrDefaultAsync(s => s.Id == suggestionId && s.SessionId == sessionId && s.WithdrawnAt == null);
+        if (suggestion is null) return Results.NotFound();
+
+        if (suggestion.SuggestedBy != userId) return Results.Forbid();
+
+        suggestion.WithdrawnAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+
+        await hub.Clients.Group(SessionHub.GroupName(sessionId))
+            .SuggestionWithdrawn(new { id = suggestionId });
+
+        return Results.NoContent();
     }
 
     private static async Task<IResult> GetSuggestions(Guid sessionId, AppDbContext db)

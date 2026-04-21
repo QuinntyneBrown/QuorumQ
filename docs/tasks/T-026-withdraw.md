@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`, `docs/designs/11-dialogs.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/SuggestionEndpoints.cs`), §5.1 (`features/suggestions/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -46,9 +46,9 @@ voting starts, the withdraw action is no longer available.
 
 ## Definition of Done
 
-- [ ] Failing spec first; passes on all browsers.
-- [ ] Non-authors see no Withdraw action on a suggestion they didn't
+- [x] Failing spec first; passes on all browsers.
+- [x] Non-authors see no Withdraw action on a suggestion they didn't
       create (authz enforced both in UI and API — L2-41).
-- [ ] Two contexts observe the withdraw within 2 s (L2-19 regression
+- [x] Two contexts observe the withdraw within 2 s (L2-19 regression
       guard).
-- [ ] Confirm dialog dismissable with Escape; cancel does not mutate.
+- [x] Confirm dialog dismissable with Escape; cancel does not mutate.
