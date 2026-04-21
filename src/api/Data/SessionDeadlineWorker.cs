@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using QuorumQ.Api.Hubs;
 using QuorumQ.Api.Models;
 
 namespace QuorumQ.Api.Data;
@@ -34,6 +36,7 @@ public sealed class SessionDeadlineWorker : BackgroundService
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var hub = scope.ServiceProvider.GetRequiredService<IHubContext<SessionHub, ISessionHubClient>>();
 
         var now = DateTime.UtcNow;
         var expiredVoting = await db.LunchSessions
@@ -52,6 +55,9 @@ public sealed class SessionDeadlineWorker : BackgroundService
             session.State = SessionState.Decided;
             session.DecidedAt = now;
             session.WinnerSuggestionId = winnerId;
+
+            await hub.Clients.Group(SessionHub.GroupName(session.Id))
+                .Decided(new { sessionId = session.Id, state = "Decided", winnerId });
         }
 
         if (expiredVoting.Count > 0)

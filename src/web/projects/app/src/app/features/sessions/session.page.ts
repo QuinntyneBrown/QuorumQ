@@ -1,10 +1,12 @@
-import { Component, inject, OnInit, signal, computed } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { SessionCardComponent, CountdownComponent, SessionStatus, ConfirmDialogComponent } from '@components';
 import { SessionStore } from '../../core/auth/session.store';
+import { SessionHubClient } from '../../core/realtime/session-hub.client';
 import { environment } from '../../../environments/environment';
 
 interface SessionDetail {
@@ -21,9 +23,15 @@ interface SessionDetail {
 @Component({
   selector: 'app-session-page',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, SessionCardComponent, CountdownComponent],
+  imports: [RouterLink, MatButtonModule, MatChipsModule, SessionCardComponent, CountdownComponent],
   template: `
     <div class="page-shell">
+      @if (!hub.isConnected() && session()) {
+        <div class="reconnecting-pill" data-testid="reconnecting-pill" role="status">
+          Reconnecting…
+        </div>
+      }
+
       @if (session()) {
         <qq-session-card
           data-testid="session-card"
@@ -93,6 +101,15 @@ interface SessionDetail {
   `,
   styles: [`
     .page-shell { padding: 24px; max-width: 800px; margin: 0 auto; }
+    .reconnecting-pill {
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
+      border-radius: 16px;
+      padding: 4px 12px;
+      font-size: 12px;
+      display: inline-block;
+      margin-bottom: 12px;
+    }
     .cancelled-banner {
       background: var(--mat-sys-error-container);
       color: var(--mat-sys-on-error-container);
@@ -104,11 +121,12 @@ interface SessionDetail {
     .slot { min-height: 4px; }
   `],
 })
-export class SessionPage implements OnInit {
+export class SessionPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
   private readonly dialog = inject(MatDialog);
   private readonly sessionStore = inject(SessionStore);
+  readonly hub = inject(SessionHubClient);
 
   readonly session = signal<SessionDetail | null>(null);
   readonly notFound = signal(false);
@@ -127,7 +145,22 @@ export class SessionPage implements OnInit {
   readonly isCancelled = computed(() => this.session()?.state === 'Cancelled');
 
   ngOnInit(): void {
+    const sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';
     this.loadSession();
+    this.hub.connect(sessionId);
+    this.hub.on<{ state: string }>('StateChanged', payload => {
+      this.session.update(s => s ? { ...s, state: payload.state } : s);
+    });
+    this.hub.on<{ state: string }>('Decided', payload => {
+      this.session.update(s => s ? { ...s, state: payload.state } : s);
+      this.loadSession();
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.hub.off('StateChanged');
+    this.hub.off('Decided');
+    this.hub.disconnect();
   }
 
   sessionTitle(): string {

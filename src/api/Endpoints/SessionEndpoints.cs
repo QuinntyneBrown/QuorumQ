@@ -1,7 +1,9 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using QuorumQ.Api.Auth;
 using QuorumQ.Api.Data;
+using QuorumQ.Api.Hubs;
 using QuorumQ.Api.Models;
 
 namespace QuorumQ.Api.Endpoints;
@@ -104,7 +106,8 @@ public static class SessionEndpoints
     private static async Task<IResult> StartVoting(
         Guid sessionId,
         HttpContext ctx,
-        AppDbContext db)
+        AppDbContext db,
+        IHubContext<SessionHub, ISessionHubClient> hub)
     {
         var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
@@ -118,15 +121,19 @@ public static class SessionEndpoints
         session.State = SessionState.Voting;
         await db.SaveChangesAsync();
 
-        return Results.Ok(new SessionDetail(
-            session.Id, session.TeamId.ToString(), session.State.ToString(),
-            session.Deadline, session.StartedAt, session.StartedBy, 0, null));
+        var dto = new SessionDetail(session.Id, session.TeamId.ToString(), session.State.ToString(),
+            session.Deadline, session.StartedAt, session.StartedBy, 0, null);
+        await hub.Clients.Group(SessionHub.GroupName(sessionId))
+            .StateChanged(new { sessionId, state = session.State.ToString() });
+
+        return Results.Ok(dto);
     }
 
     private static async Task<IResult> CancelSession(
         Guid sessionId,
         HttpContext ctx,
-        AppDbContext db)
+        AppDbContext db,
+        IHubContext<SessionHub, ISessionHubClient> hub)
     {
         var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
@@ -140,9 +147,12 @@ public static class SessionEndpoints
         session.State = SessionState.Cancelled;
         await db.SaveChangesAsync();
 
-        return Results.Ok(new SessionDetail(
-            session.Id, session.TeamId.ToString(), session.State.ToString(),
-            session.Deadline, session.StartedAt, session.StartedBy, 0, null));
+        var dto = new SessionDetail(session.Id, session.TeamId.ToString(), session.State.ToString(),
+            session.Deadline, session.StartedAt, session.StartedBy, 0, null);
+        await hub.Clients.Group(SessionHub.GroupName(sessionId))
+            .StateChanged(new { sessionId, state = session.State.ToString() });
+
+        return Results.Ok(dto);
     }
 
     private static async Task<IResult> DeleteSession(

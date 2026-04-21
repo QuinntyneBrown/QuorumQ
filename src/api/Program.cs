@@ -150,14 +150,7 @@ app.MapHistoryEndpoints();
 
 if (app.Environment.IsDevelopment())
 {
-    app.MapPost("/_test/advance-time", async (Guid sessionId, AppDbContext db) =>
-    {
-        var session = await db.LunchSessions.FirstOrDefaultAsync(s => s.Id == sessionId);
-        if (session is null) return Results.NotFound();
-        session.Deadline = DateTime.UtcNow.AddSeconds(-10);
-        await db.SaveChangesAsync();
-        return Results.Ok();
-    }).WithTags("Test").ExcludeFromDescription();
+    app.MapTestEndpoints();
 }
 
 app.Run();

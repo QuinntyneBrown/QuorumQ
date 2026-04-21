@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/12-errors-empty-states.md`, `docs/designs/13-notifications.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Hubs/SessionHub.cs`), §5.1 (`core/realtime/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -70,10 +70,10 @@ browser contexts.
 
 ## Definition of Done
 
-- [ ] Two browser contexts reflect the same session within 2 s on every
+- [x] Two browser contexts reflect the same session within 2 s on every
       event type (vote, suggestion, comment, state change).
-- [ ] Reconnecting indicator appears within 3 s of transport loss and
+- [x] Reconnecting indicator appears within 3 s of transport loss and
       disappears upon resync.
-- [ ] Hub refuses connections to sessions the user is not a member of
+- [x] Hub refuses connections to sessions the user is not a member of
       (T-015).
-- [ ] No polling loops or setInterval-based state fetchers added.
+- [x] No polling loops or setInterval-based state fetchers added.
