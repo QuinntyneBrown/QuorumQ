@@ -108,6 +108,7 @@ import { NotificationService } from '../notifications/notification.service';
     .field { width: 100%; margin-bottom: 8px; }
     .submit-btn { width: 100%; margin-bottom: 16px; }
     .links { text-align: center; font-size: 14px; margin-bottom: 8px; }
+    .links a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 4px; }
     .rate-limit-banner {
       background: var(--mat-sys-error-container);
       color: var(--mat-sys-on-error-container);

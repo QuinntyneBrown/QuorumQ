@@ -5,7 +5,7 @@
 **Primary area:** e2e + small UI fixes discovered in audit
 **Design refs:** `docs/designs/15-accessibility.md`, `docs/designs/03-components.md`
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/responsive/L2-23...`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -45,6 +45,6 @@ Walk a canonical list of pages: sign-in, team dashboard, session
 
 ## Definition of Done
 
-- [ ] Failing spec first; passes across all four browser projects.
-- [ ] Zero elements below the 44×44 px threshold at 375 px.
-- [ ] Any fixes land in `@components/*` when primitives are undersized.
+- [x] Failing spec first; passes across all four browser projects.
+- [x] Zero elements below the 44×44 px threshold at 375 px.
+- [x] Any fixes land in `@components/*` when primitives are undersized.
