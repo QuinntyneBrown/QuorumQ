@@ -20,6 +20,16 @@ public static class TestEndpoints
             return Results.Ok();
         });
 
+        group.MapPost("/advance-tie-break", async (Guid sessionId, AppDbContext db) =>
+        {
+            var session = await db.LunchSessions.FirstOrDefaultAsync(s => s.Id == sessionId);
+            if (session is null) return Results.NotFound();
+            if (!session.TieBreakDeadline.HasValue) return Results.BadRequest("No tie-break in progress.");
+            session.TieBreakDeadline = DateTime.UtcNow.AddSeconds(-10);
+            await db.SaveChangesAsync();
+            return Results.Ok();
+        });
+
         return app;
     }
 }

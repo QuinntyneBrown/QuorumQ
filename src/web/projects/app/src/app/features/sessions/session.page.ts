@@ -8,9 +8,16 @@ import { SessionCardComponent, CountdownComponent, SessionStatus, ConfirmDialogC
 import { PresenceComponent } from './presence.component';
 import { SuggestRestaurantComponent } from '../suggestions/suggest-restaurant.component';
 import { SuggestionListComponent } from '../suggestions/suggestion-list.component';
+import { TieBreakBannerComponent } from '../voting/tie-break-banner.component';
 import { SessionStore } from '../../core/auth/session.store';
 import { SessionHubClient } from '../../core/realtime/session-hub.client';
 import { environment } from '../../../environments/environment';
+
+interface TieBreakInfo {
+  active: boolean;
+  tiedSuggestionIds: string[];
+  deadline: string | null;
+}
 
 interface SessionDetail {
   id: string;
@@ -21,12 +28,14 @@ interface SessionDetail {
   startedBy: string;
   suggestionCount: number;
   winnerName?: string;
+  winnerChosenAtRandom?: boolean;
+  tieBreak?: TieBreakInfo | null;
 }
 
 @Component({
   selector: 'app-session-page',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatChipsModule, SessionCardComponent, CountdownComponent, PresenceComponent, SuggestRestaurantComponent, SuggestionListComponent],
+  imports: [RouterLink, MatButtonModule, MatChipsModule, SessionCardComponent, CountdownComponent, PresenceComponent, SuggestRestaurantComponent, SuggestionListComponent, TieBreakBannerComponent],
   template: `
     <div class="page-shell">
       @if (!hub.isConnected() && session()) {
@@ -43,6 +52,9 @@ interface SessionDetail {
         >
           @if (isActive()) {
             <qq-countdown slot="countdown" [deadline]="session()!.deadline" />
+          }
+          @if (session()!.winnerChosenAtRandom) {
+            <span class="random-chip" data-testid="winner-chosen-at-random">Winner chosen at random</span>
           }
           <div slot="actions">
             @if (isOrganizer() && session()!.state === 'Suggesting') {
@@ -84,13 +96,20 @@ interface SessionDetail {
         <div class="content-slots">
           <section class="slot" data-testid="suggestions-slot">
             @if (session()) {
+              @if (tieBreak()?.active) {
+                <app-tie-break-banner [deadline]="tieBreak()!.deadline" />
+              }
               <app-suggest-restaurant
                 [sessionId]="session()!.id"
                 [teamId]="session()!.teamId"
                 [disabled]="isSuggestingDisabled()"
               />
               <div class="suggestions-gap"></div>
-              <app-suggestion-list [sessionId]="session()!.id" />
+              <app-suggestion-list
+                [sessionId]="session()!.id"
+                [sessionState]="session()!.state"
+                [tiedSuggestionIds]="tieBreak()?.active ? tieBreak()!.tiedSuggestionIds : []"
+              />
             }
           </section>
           <section class="slot" data-testid="votes-slot">
@@ -121,6 +140,15 @@ interface SessionDetail {
       display: inline-block;
       margin-bottom: 12px;
     }
+    .random-chip {
+      display: inline-block;
+      background: var(--mat-sys-secondary-container);
+      color: var(--mat-sys-on-secondary-container);
+      border-radius: 16px;
+      padding: 2px 10px;
+      font-size: 12px;
+      margin-top: 4px;
+    }
     .cancelled-banner {
       background: var(--mat-sys-error-container);
       color: var(--mat-sys-on-error-container);
@@ -142,6 +170,7 @@ export class SessionPage implements OnInit, OnDestroy {
 
   readonly session = signal<SessionDetail | null>(null);
   readonly notFound = signal(false);
+  readonly tieBreak = computed(() => this.session()?.tieBreak ?? null);
 
   readonly isOrganizer = computed(() => {
     const s = this.session();
@@ -165,6 +194,12 @@ export class SessionPage implements OnInit, OnDestroy {
     this.hub.on<{ state: string }>('StateChanged', payload => {
       this.session.update(s => s ? { ...s, state: payload.state } : s);
     });
+    this.hub.on<{ tiedSuggestionIds: string[]; deadline: string }>('TieBreakStarted', payload => {
+      this.session.update(s => s ? {
+        ...s,
+        tieBreak: { active: true, tiedSuggestionIds: payload.tiedSuggestionIds, deadline: payload.deadline }
+      } : s);
+    });
     this.hub.on<{ state: string }>('Decided', payload => {
       this.session.update(s => s ? { ...s, state: payload.state } : s);
       this.loadSession();
@@ -173,6 +208,7 @@ export class SessionPage implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.hub.off('StateChanged');
+    this.hub.off('TieBreakStarted');
     this.hub.off('Decided');
     this.hub.disconnect();
   }
