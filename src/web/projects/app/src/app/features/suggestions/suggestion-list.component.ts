@@ -8,6 +8,7 @@ import { AvatarComponent, CardComponent, ConfirmDialogComponent } from '@compone
 import { SessionHubClient } from '../../core/realtime/session-hub.client';
 import { SessionStore } from '../../core/auth/session.store';
 import { VoteButtonComponent } from '../voting/vote-button.component';
+import { CommentThreadComponent } from '../comments/comment-thread.component';
 import { environment } from '../../../environments/environment';
 import type { SuggestionDto } from './suggest-restaurant.component';
 
@@ -20,7 +21,7 @@ interface VoteTally {
 @Component({
   selector: 'app-suggestion-list',
   standalone: true,
-  imports: [MatChipsModule, MatButtonModule, MatIconModule, AvatarComponent, CardComponent, VoteButtonComponent],
+  imports: [MatChipsModule, MatButtonModule, MatIconModule, AvatarComponent, CardComponent, VoteButtonComponent, CommentThreadComponent],
   template: `
     @if (suggestions().length === 0) {
       <p class="empty" data-testid="no-suggestions">No suggestions yet. Be the first!</p>
@@ -74,7 +75,19 @@ interface VoteTally {
                   <span class="vote-count" [attr.data-testid]="'vote-count-' + s.id">
                     {{ s.voteCount }} vote{{ s.voteCount === 1 ? '' : 's' }}
                   </span>
+                  <button mat-button class="comments-toggle"
+                    [attr.data-testid]="'toggle-comments-' + s.restaurantName"
+                    (click)="toggleThread(s.id)">
+                    {{ isThreadOpen(s.id) ? 'Hide comments' : 'Comments' }}
+                  </button>
                 </div>
+                @if (isThreadOpen(s.id)) {
+                  <app-comment-thread
+                    [sessionId]="sessionId"
+                    [suggestionId]="s.id"
+                    [sessionState]="sessionState"
+                  />
+                }
               </div>
             </qq-card>
           </li>
@@ -95,6 +108,7 @@ interface VoteTally {
     .website { font-size: 13px; color: var(--mat-sys-primary); display: block; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .meta { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; color: var(--mat-sys-on-surface-variant); }
     .vote-count { margin-left: auto; }
+    .comments-toggle { font-size: 12px; padding: 0 6px; min-width: 0; }
   `],
 })
 export class SuggestionListComponent implements OnInit, OnDestroy {
@@ -108,6 +122,20 @@ export class SuggestionListComponent implements OnInit, OnDestroy {
   private readonly sessionStore = inject(SessionStore);
 
   readonly suggestions = signal<SuggestionDto[]>([]);
+  readonly expandedThreads = signal<Set<string>>(new Set());
+
+  toggleThread(suggestionId: string): void {
+    this.expandedThreads.update(set => {
+      const next = new Set(set);
+      if (next.has(suggestionId)) next.delete(suggestionId);
+      else next.add(suggestionId);
+      return next;
+    });
+  }
+
+  isThreadOpen(suggestionId: string): boolean {
+    return this.expandedThreads().has(suggestionId);
+  }
 
   canWithdraw(s: SuggestionDto): boolean {
     const userId = this.sessionStore.user()?.id;

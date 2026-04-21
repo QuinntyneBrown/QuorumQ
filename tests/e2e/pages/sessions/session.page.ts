@@ -38,4 +38,24 @@ export class SessionPage extends BasePage {
   async expectCancelButton(): Promise<void> {
     await expect(this.page.getByTestId('cancel-session-btn')).toBeVisible();
   }
+
+  async openThread(restaurantName: string): Promise<void> {
+    await this.page.getByTestId(`toggle-comments-${restaurantName}`).click();
+    await expect(this.page.getByTestId('comment-thread')).toBeVisible();
+  }
+
+  async postComment(text: string): Promise<void> {
+    await this.page.getByTestId('comment-input').fill(text);
+    await this.page.getByTestId('post-comment-btn').click();
+  }
+
+  async editComment(index: number, newText: string): Promise<void> {
+    await this.page.getByTestId(`edit-btn-${index}`).click();
+    await this.page.getByTestId(`edit-input-${index}`).fill(newText);
+    await this.page.getByTestId(`save-edit-btn-${index}`).click();
+  }
+
+  async deleteComment(index: number): Promise<void> {
+    await this.page.getByTestId(`delete-btn-${index}`).click();
+  }
 }
