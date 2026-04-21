@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`, `docs/designs/14-motion.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/VoteEndpoints.cs`), §5.1 (`features/voting/`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
