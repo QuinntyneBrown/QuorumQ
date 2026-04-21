@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`, `docs/designs/11-dialogs.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/SuggestionEndpoints.cs`), §5.1 (`features/suggestions/`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
