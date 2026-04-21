@@ -5,7 +5,7 @@
 **Primary area:** backend + e2e
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/security/L2-42...`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -53,8 +53,8 @@ ends up in `localStorage` or `sessionStorage`.
 
 ## Definition of Done
 
-- [ ] Spec passes across all browsers against a production-mode build
+- [x] Spec passes across all browsers against a production-mode build
       with HTTPS enabled.
-- [ ] HSTS header present in production responses.
-- [ ] No credentials in client-side storage — only the HttpOnly cookie.
-- [ ] Password hashing uses a modern KDF with per-user salt.
+- [x] HSTS header present in production responses.
+- [x] No credentials in client-side storage — only the HttpOnly cookie.
+- [x] Password hashing uses a modern KDF with per-user salt.
