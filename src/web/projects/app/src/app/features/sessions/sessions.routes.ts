@@ -7,6 +7,11 @@ export const sessionsRoutes: Routes = [
       import('./start-session.page').then(m => m.StartSessionPage),
   },
   {
+    path: ':sessionId/winner',
+    loadComponent: () =>
+      import('./winner-reveal.page').then(m => m.WinnerRevealPage),
+  },
+  {
     path: ':sessionId',
     loadComponent: () =>
       import('./session.page').then(m => m.SessionPage),

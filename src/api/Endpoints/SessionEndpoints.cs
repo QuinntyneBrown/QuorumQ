@@ -18,7 +18,9 @@ public static class SessionEndpoints
     private record SessionDetail(
         Guid Id, string TeamId, string State, DateTime Deadline, DateTime StartedAt,
         Guid StartedBy, int SuggestionCount, string? WinnerName,
-        bool WinnerChosenAtRandom = false, TieBreakInfo? TieBreak = null);
+        bool WinnerChosenAtRandom = false, TieBreakInfo? TieBreak = null,
+        string? WinnerCuisine = null, string? WinnerWebsiteUrl = null,
+        string? WinnerDirectionsUrl = null);
 
     public static IEndpointRouteBuilder MapSessionEndpoints(this IEndpointRouteBuilder app)
     {
@@ -62,7 +64,7 @@ public static class SessionEndpoints
                    (s.State == SessionState.Suggesting || s.State == SessionState.Voting))
             .Select(s => new SessionDetail(
                 s.Id, s.TeamId.ToString(), s.State.ToString(), s.Deadline, s.StartedAt,
-                s.StartedBy, s.Suggestions.Count(), null, false, null))
+                s.StartedBy, s.Suggestions.Count(), null, false, null, null, null, null))
             .FirstOrDefaultAsync();
 
         if (existing is not null)
@@ -101,8 +103,12 @@ public static class SessionEndpoints
         if (raw is null) return Results.NotFound();
 
         var suggestionCount = raw.Suggestions.Count(s => s.WithdrawnAt == null);
-        var winnerName = raw.WinnerSuggestionId is not null
-            ? raw.Suggestions.FirstOrDefault(sg => sg.Id == raw.WinnerSuggestionId)?.Restaurant?.Name
+        var winnerRestaurant = raw.WinnerSuggestionId is not null
+            ? raw.Suggestions.FirstOrDefault(sg => sg.Id == raw.WinnerSuggestionId)?.Restaurant
+            : null;
+        var winnerName = winnerRestaurant?.Name;
+        var winnerDirectionsUrl = winnerRestaurant?.Address is not null
+            ? $"https://maps.google.com/maps?q={Uri.EscapeDataString(winnerRestaurant.Address)}"
             : null;
 
         TieBreakInfo? tieBreak = null;
@@ -116,7 +122,8 @@ public static class SessionEndpoints
 
         var dto = new SessionDetail(raw.Id, raw.TeamId.ToString(), raw.State.ToString(),
             raw.Deadline, raw.StartedAt, raw.StartedBy, suggestionCount, winnerName,
-            raw.WinnerChosenAtRandom, tieBreak);
+            raw.WinnerChosenAtRandom, tieBreak,
+            winnerRestaurant?.Cuisine, winnerRestaurant?.WebsiteUrl, winnerDirectionsUrl);
 
         return Results.Ok(dto);
     }

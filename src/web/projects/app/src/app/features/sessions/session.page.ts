@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -154,6 +154,7 @@ interface SessionDetail {
 })
 export class SessionPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly http = inject(HttpClient);
   private readonly dialog = inject(MatDialog);
   private readonly sessionStore = inject(SessionStore);
@@ -199,9 +200,12 @@ export class SessionPage implements OnInit, OnDestroy {
         tieBreak: { active: true, tiedSuggestionIds: payload.tiedSuggestionIds, deadline: payload.tieBreakDeadline }
       } : s);
     });
-    this.hub.on<{ state: string }>('Decided', payload => {
+    this.hub.on<{ state: string; sessionId: string }>('Decided', payload => {
       this.session.update(s => s ? { ...s, state: payload.state } : s);
-      this.loadSession();
+      const s = this.session();
+      if (s) {
+        this.router.navigate(['/teams', s.teamId, 'sessions', s.id, 'winner']);
+      }
     });
   }
 
