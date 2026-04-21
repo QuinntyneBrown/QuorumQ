@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "l2Id": "L2-17",
+    "title": "[L2-17] participating member submits 1–5 star rating; average updates",
+    "status": "failed"
+  },
+  {
+    "l2Id": "L2-17",
+    "title": "[L2-17] re-submitting replaces the previous review for the same visit",
+    "status": "failed"
+  },
+  {
+    "l2Id": "L2-17",
+    "title": "[L2-17] non-participant does not see a review form",
+    "status": "failed"
+  }
+]

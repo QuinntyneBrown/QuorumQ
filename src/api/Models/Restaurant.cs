@@ -8,6 +8,7 @@ public class Restaurant
     public string? Cuisine { get; set; }
     public string? Address { get; set; }
     public string? WebsiteUrl { get; set; }
+    public double? AverageRating { get; set; }
     public Guid CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
     public double? AverageRating { get; set; }

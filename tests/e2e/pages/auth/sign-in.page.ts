@@ -16,7 +16,7 @@ export class SignInPage extends BasePage {
   async signIn({ email, password }: { email: string; password: string }): Promise<void> {
     await this.page.getByTestId('email-input').fill(email);
     await this.page.getByTestId('password-input').fill(password);
-    await this.page.getByTestId('submit-button').click();
+    await this.page.getByTestId('submit-button').locator('button').click();
   }
 
   async expectRateLimited(retryAfterSeconds?: number): Promise<void> {
