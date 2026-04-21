@@ -1,6 +1,8 @@
 import { test as base, APIRequestContext } from '@playwright/test';
 
 const API_BASE = process.env['API_BASE_URL'] ?? 'http://localhost:5052';
+const DEFAULT_EMAIL = process.env['E2E_ALICE_EMAIL'] ?? 'alice@example.com';
+const DEFAULT_PASSWORD = process.env['E2E_ALICE_PASSWORD'] ?? 'Password1!';
 
 export type SessionState = 'Suggesting' | 'Voting' | 'Decided' | 'Cancelled';
 
@@ -17,6 +19,9 @@ export async function createSessionInState(
   teamId: string,
   _state: SessionState = 'Suggesting',
 ): Promise<CreatedSession> {
+  await request.post(`${API_BASE}/auth/sign-in`, {
+    data: { email: DEFAULT_EMAIL, password: DEFAULT_PASSWORD },
+  });
   const res = await request.post(`${API_BASE}/teams/${teamId}/sessions`, {
     data: { deadlineMinutes: 30 },
     failOnStatusCode: false,
