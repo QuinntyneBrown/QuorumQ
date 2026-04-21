@@ -19,6 +19,7 @@ public interface ISessionHubClient
     Task TieBreakStarted(object payload);
     Task Decided(object payload);
     Task PresenceChanged(object payload);
+    Task FiveMinuteWarning(object payload);
 }
 
 [Authorize]

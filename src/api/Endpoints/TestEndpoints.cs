@@ -30,6 +30,17 @@ public static class TestEndpoints
             return Results.Ok();
         });
 
+        // Advance session deadline to be within 5 minutes (triggers FiveMinuteWarning)
+        group.MapPost("/advance-five-min", async (Guid sessionId, AppDbContext db) =>
+        {
+            var session = await db.LunchSessions.FirstOrDefaultAsync(s => s.Id == sessionId);
+            if (session is null) return Results.NotFound();
+            session.Deadline = DateTime.UtcNow.AddMinutes(4);
+            session.FiveMinutesFired = false; // reset so it fires again
+            await db.SaveChangesAsync();
+            return Results.Ok();
+        });
+
         return app;
     }
 }

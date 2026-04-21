@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -6,6 +6,7 @@ import { HttpClient } from '@angular/common/http';
 import { SessionCardComponent, CountdownComponent, SessionStatus } from '@components';
 import { environment } from '../../../environments/environment';
 import { SessionStore } from '../../core/auth/session.store';
+import { SessionNotificationListener } from '../notifications/session-notification.listener';
 
 interface TeamDetail {
   id: string;
@@ -131,10 +132,11 @@ interface DashboardData {
     }
   `],
 })
-export class TeamDashboardPage implements OnInit {
+export class TeamDashboardPage implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
   private readonly session = inject(SessionStore);
+  private readonly notifListener = inject(SessionNotificationListener);
 
   readonly dashboard = signal<DashboardData | null>(null);
   readonly teamId = signal<string>('');
@@ -148,6 +150,12 @@ export class TeamDashboardPage implements OnInit {
       next: d => this.dashboard.set(d),
       error: () => {},
     });
+
+    this.notifListener.start(id);
+  }
+
+  ngOnDestroy(): void {
+    this.notifListener.stop();
   }
 
   sessionTitle(session: SessionSummary): string {

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
+import { Component, inject, NgZone, OnInit, OnDestroy, signal, computed } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
@@ -97,6 +97,12 @@ interface SessionDetail {
           </div>
         }
 
+        @if (showFiveMinWarning()) {
+          <div class="five-min-banner" data-testid="five-minute-banner" role="status" aria-live="assertive">
+            <span>⏳ Voting closes in 5 minutes</span>
+          </div>
+        }
+
         <div class="content-slots">
           <section class="slot" data-testid="suggestions-slot">
             @if (session()) {
@@ -148,6 +154,14 @@ interface SessionDetail {
       border-radius: 8px;
       margin-top: 16px;
     }
+    .five-min-banner {
+      background: var(--mat-sys-tertiary-container);
+      color: var(--mat-sys-on-tertiary-container);
+      padding: 10px 16px;
+      border-radius: 8px;
+      margin-top: 12px;
+      font-weight: 500;
+    }
     .content-slots { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
     .slot { min-height: 4px; }
     .suggestions-gap { height: 16px; }
@@ -159,10 +173,12 @@ export class SessionPage implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly dialog = inject(MatDialog);
   private readonly sessionStore = inject(SessionStore);
+  private readonly zone = inject(NgZone);
   readonly hub = inject(SessionHubClient);
 
   readonly session = signal<SessionDetail | null>(null);
   readonly notFound = signal(false);
+  readonly showFiveMinWarning = signal(false);
 
   readonly isOrganizer = computed(() => {
     const s = this.session();
@@ -193,26 +209,32 @@ export class SessionPage implements OnInit, OnDestroy {
     this.loadSession();
     this.hub.connect(sessionId);
     this.hub.on<{ state: string }>('StateChanged', payload => {
-      this.session.update(s => s ? { ...s, state: payload.state } : s);
+      this.zone.run(() => this.session.update(s => s ? { ...s, state: payload.state } : s));
     });
     this.hub.on<{ tiedSuggestionIds: string[]; tieBreakDeadline: string }>('TieBreakStarted', payload => {
-      this.session.update(s => s ? {
+      this.zone.run(() => this.session.update(s => s ? {
         ...s,
         tieBreak: { active: true, tiedSuggestionIds: payload.tiedSuggestionIds, deadline: payload.tieBreakDeadline }
-      } : s);
+      } : s));
+    });
+    this.hub.on('FiveMinuteWarning', () => {
+      this.zone.run(() => this.showFiveMinWarning.set(true));
     });
     this.hub.on<{ state: string; sessionId: string }>('Decided', payload => {
-      this.session.update(s => s ? { ...s, state: payload.state } : s);
-      const s = this.session();
-      if (s) {
-        this.router.navigate(['/teams', s.teamId, 'sessions', s.id, 'winner']);
-      }
+      this.zone.run(() => {
+        this.session.update(s => s ? { ...s, state: payload.state } : s);
+        const s = this.session();
+        if (s) {
+          this.router.navigate(['/teams', s.teamId, 'sessions', s.id, 'winner']);
+        }
+      });
     });
   }
 
   ngOnDestroy(): void {
     this.hub.off('StateChanged');
     this.hub.off('TieBreakStarted');
+    this.hub.off('FiveMinuteWarning');
     this.hub.off('Decided');
     this.hub.disconnect();
   }

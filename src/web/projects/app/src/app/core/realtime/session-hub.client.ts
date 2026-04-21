@@ -7,7 +7,7 @@ export type HubEventName =
   | 'VoteChanged'
   | 'CommentAdded' | 'CommentEdited' | 'CommentDeleted'
   | 'StateChanged' | 'TieBreakStarted' | 'Decided'
-  | 'PresenceChanged';
+  | 'PresenceChanged' | 'FiveMinuteWarning';
 
 @Injectable({ providedIn: 'root' })
 export class SessionHubClient {

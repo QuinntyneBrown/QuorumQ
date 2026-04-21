@@ -38,10 +38,29 @@ public sealed class SessionDeadlineWorker : BackgroundService
         await using var scope = _scopeFactory.CreateAsyncScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var hub = scope.ServiceProvider.GetRequiredService<IHubContext<SessionHub, ISessionHubClient>>();
+        var teamHub = scope.ServiceProvider.GetRequiredService<IHubContext<TeamNotificationHub, ITeamNotificationClient>>();
 
         var now = DateTime.UtcNow;
 
-        // 1. Regular Voting deadline
+        // 1. Five-minute warnings (before regular deadline check)
+        var fiveMinWarn = await db.LunchSessions
+            .Where(s => s.State == SessionState.Voting
+                     && !s.FiveMinutesFired
+                     && s.TieBreakDeadline == null
+                     && s.Deadline <= now.AddMinutes(5)
+                     && s.Deadline > now)
+            .ToListAsync(ct);
+
+        foreach (var session in fiveMinWarn)
+        {
+            session.FiveMinutesFired = true;
+            await hub.Clients.Group(SessionHub.GroupName(session.Id))
+                .FiveMinuteWarning(new { sessionId = session.Id });
+            await teamHub.Clients.Group(TeamNotificationHub.GroupName(session.TeamId))
+                .SessionEvent(new { kind = "fiveMinutes", sessionId = session.Id, teamId = session.TeamId });
+        }
+
+        // 2. Regular Voting deadline
         var expiredVoting = await db.LunchSessions
             .Where(s => s.State == SessionState.Voting && s.TieBreakDeadline == null && s.Deadline <= now)
             .Include(s => s.Votes)
@@ -50,10 +69,10 @@ public sealed class SessionDeadlineWorker : BackgroundService
 
         foreach (var session in expiredVoting)
         {
-            await HandleVotingDeadline(session, now, db, hub);
+            await HandleVotingDeadline(session, now, db, hub, teamHub);
         }
 
-        // 2. Tie-break deadline
+        // 3. Tie-break deadline
         var expiredTieBreaks = await db.LunchSessions
             .Where(s => s.State == SessionState.Voting && s.TieBreakDeadline != null && s.TieBreakDeadline <= now)
             .Include(s => s.Votes)
@@ -62,16 +81,17 @@ public sealed class SessionDeadlineWorker : BackgroundService
 
         foreach (var session in expiredTieBreaks)
         {
-            await HandleTieBreakDeadline(session, now, db, hub);
+            await HandleTieBreakDeadline(session, now, db, hub, teamHub);
         }
 
-        if (expiredVoting.Count + expiredTieBreaks.Count > 0)
+        if (fiveMinWarn.Count + expiredVoting.Count + expiredTieBreaks.Count > 0)
             await db.SaveChangesAsync(ct);
     }
 
     private static async Task HandleVotingDeadline(
         LunchSession session, DateTime now, AppDbContext db,
-        IHubContext<SessionHub, ISessionHubClient> hub)
+        IHubContext<SessionHub, ISessionHubClient> hub,
+        IHubContext<TeamNotificationHub, ITeamNotificationClient> teamHub)
     {
         var activeSuggestions = session.Suggestions.Where(s => s.WithdrawnAt == null).ToList();
         var tallies = session.Votes
@@ -103,6 +123,10 @@ public sealed class SessionDeadlineWorker : BackgroundService
 
             await hub.Clients.Group(SessionHub.GroupName(session.Id))
                 .Decided(new { sessionId = session.Id, state = "Decided", winnerId = tiedIds[0] });
+
+            var winnerName = session.Suggestions.FirstOrDefault(s => s.Id == tiedIds[0])?.Restaurant?.Name ?? "";
+            await teamHub.Clients.Group(TeamNotificationHub.GroupName(session.TeamId))
+                .SessionEvent(new { kind = "decided", sessionId = session.Id, teamId = session.TeamId, winnerName });
         }
         else
         {
@@ -126,7 +150,8 @@ public sealed class SessionDeadlineWorker : BackgroundService
 
     private static async Task HandleTieBreakDeadline(
         LunchSession session, DateTime now, AppDbContext db,
-        IHubContext<SessionHub, ISessionHubClient> hub)
+        IHubContext<SessionHub, ISessionHubClient> hub,
+        IHubContext<TeamNotificationHub, ITeamNotificationClient> teamHub)
     {
         var tiedIds = session.TiedSuggestionIdsJson is not null
             ? JsonSerializer.Deserialize<List<Guid>>(session.TiedSuggestionIdsJson) ?? []
@@ -165,5 +190,9 @@ public sealed class SessionDeadlineWorker : BackgroundService
 
         await hub.Clients.Group(SessionHub.GroupName(session.Id))
             .Decided(new { sessionId = session.Id, state = "Decided", winnerId, chosenAtRandom });
+
+        var winnerName = session.Suggestions.FirstOrDefault(s => s.Id == winnerId)?.Restaurant?.Name ?? "";
+        await teamHub.Clients.Group(TeamNotificationHub.GroupName(session.TeamId))
+            .SessionEvent(new { kind = "decided", sessionId = session.Id, teamId = session.TeamId, winnerName });
     }
 }

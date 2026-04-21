@@ -133,6 +133,7 @@ app.UseAuthorization();
 app.UseRateLimiter();
 
 app.MapHub<QuorumQ.Api.Hubs.SessionHub>("/hubs/session");
+app.MapHub<QuorumQ.Api.Hubs.TeamNotificationHub>("/hubs/notifications");
 
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }))
    .WithTags("Health")
@@ -142,6 +143,7 @@ app.MapAuthEndpoints();
 app.MapTeamEndpoints();
 app.MapInviteEndpoints();
 app.MapSessionEndpoints();
+app.MapNotificationEndpoints();
 app.MapSuggestionEndpoints();
 app.MapVoteEndpoints();
 app.MapCommentEndpoints();

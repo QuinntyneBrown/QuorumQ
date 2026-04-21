@@ -47,7 +47,8 @@ public static class SessionEndpoints
         Guid teamId,
         StartSessionRequest req,
         HttpContext ctx,
-        AppDbContext db)
+        AppDbContext db,
+        IHubContext<TeamNotificationHub, ITeamNotificationClient> teamHub)
     {
         var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
@@ -82,6 +83,9 @@ public static class SessionEndpoints
 
         db.LunchSessions.Add(session);
         await db.SaveChangesAsync();
+
+        await teamHub.Clients.Group(TeamNotificationHub.GroupName(teamId))
+            .SessionEvent(new { kind = "sessionStarted", sessionId = session.Id, teamId });
 
         return Results.Created(
             $"/teams/{teamId}/sessions/{session.Id}",
@@ -133,7 +137,8 @@ public static class SessionEndpoints
         Guid sessionId,
         HttpContext ctx,
         AppDbContext db,
-        IHubContext<SessionHub, ISessionHubClient> hub)
+        IHubContext<SessionHub, ISessionHubClient> hub,
+        IHubContext<TeamNotificationHub, ITeamNotificationClient> teamHub)
     {
         var userIdStr = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (!Guid.TryParse(userIdStr, out var userId)) return Results.Unauthorized();
@@ -151,6 +156,8 @@ public static class SessionEndpoints
             session.Deadline, session.StartedAt, session.StartedBy, 0, null, false, null, null, null, null);
         await hub.Clients.Group(SessionHub.GroupName(sessionId))
             .StateChanged(new { sessionId, state = session.State.ToString() });
+        await teamHub.Clients.Group(TeamNotificationHub.GroupName(session.TeamId))
+            .SessionEvent(new { kind = "votingStarted", sessionId, teamId = session.TeamId });
 
         return Results.Ok(dto);
     }
