@@ -16,6 +16,7 @@ public interface ISessionHubClient
     Task CommentEdited(object payload);
     Task CommentDeleted(object payload);
     Task StateChanged(object payload);
+    Task TieBreakStarted(object payload);
     Task Decided(object payload);
     Task PresenceChanged(object payload);
 }

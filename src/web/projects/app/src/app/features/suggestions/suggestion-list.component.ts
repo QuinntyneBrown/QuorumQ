@@ -44,6 +44,7 @@ interface VoteTally {
                       [restaurantName]="s.restaurantName"
                       [voteCount]="s.voteCount"
                       [youVoted]="s.youVoted"
+                      [disabled]="tiedSuggestionIds.length > 0 && !tiedSuggestionIds.includes(s.id)"
                       (toggle)="castVote($event)"
                     />
                   }
@@ -99,6 +100,7 @@ interface VoteTally {
 export class SuggestionListComponent implements OnInit, OnDestroy {
   @Input({ required: true }) sessionId!: string;
   @Input() sessionState = '';
+  @Input() tiedSuggestionIds: string[] = [];
 
   private readonly http = inject(HttpClient);
   private readonly hub = inject(SessionHubClient);

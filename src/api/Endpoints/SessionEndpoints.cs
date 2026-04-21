@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using QuorumQ.Api.Auth;
@@ -12,9 +13,12 @@ public static class SessionEndpoints
 {
     private record StartSessionRequest(int DeadlineMinutes = 45);
 
+    private record TieBreakInfo(bool Active, Guid[] TiedSuggestionIds, DateTime? Deadline);
+
     private record SessionDetail(
         Guid Id, string TeamId, string State, DateTime Deadline, DateTime StartedAt,
-        Guid StartedBy, int SuggestionCount, string? WinnerName);
+        Guid StartedBy, int SuggestionCount, string? WinnerName,
+        bool WinnerChosenAtRandom = false, TieBreakInfo? TieBreak = null);
 
     public static IEndpointRouteBuilder MapSessionEndpoints(this IEndpointRouteBuilder app)
     {
@@ -58,7 +62,7 @@ public static class SessionEndpoints
                    (s.State == SessionState.Suggesting || s.State == SessionState.Voting))
             .Select(s => new SessionDetail(
                 s.Id, s.TeamId.ToString(), s.State.ToString(), s.Deadline, s.StartedAt,
-                s.StartedBy, s.Suggestions.Count(), null))
+                s.StartedBy, s.Suggestions.Count(), null, false, null))
             .FirstOrDefaultAsync();
 
         if (existing is not null)
@@ -88,20 +92,33 @@ public static class SessionEndpoints
         Guid sessionId,
         AppDbContext db)
     {
-        var session = await db.LunchSessions
+        var raw = await db.LunchSessions
             .AsNoTracking()
+            .Include(s => s.Suggestions).ThenInclude(sg => sg.Restaurant)
             .Where(s => s.Id == sessionId && s.TeamId == teamId)
-            .Select(s => new SessionDetail(
-                s.Id, s.TeamId.ToString(), s.State.ToString(), s.Deadline, s.StartedAt,
-                s.StartedBy,
-                s.Suggestions.Count(),
-                s.WinnerSuggestionId != null
-                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
-                        .Select(sg => sg.Restaurant.Name).FirstOrDefault()
-                    : null))
             .FirstOrDefaultAsync();
 
-        return session is null ? Results.NotFound() : Results.Ok(session);
+        if (raw is null) return Results.NotFound();
+
+        var suggestionCount = raw.Suggestions.Count(s => s.WithdrawnAt == null);
+        var winnerName = raw.WinnerSuggestionId is not null
+            ? raw.Suggestions.FirstOrDefault(sg => sg.Id == raw.WinnerSuggestionId)?.Restaurant?.Name
+            : null;
+
+        TieBreakInfo? tieBreak = null;
+        if (raw.State == SessionState.Voting && raw.TieBreakDeadline is not null)
+        {
+            var tiedIds = raw.TiedSuggestionIdsJson is not null
+                ? JsonSerializer.Deserialize<Guid[]>(raw.TiedSuggestionIdsJson) ?? []
+                : [];
+            tieBreak = new TieBreakInfo(true, tiedIds, raw.TieBreakDeadline);
+        }
+
+        var dto = new SessionDetail(raw.Id, raw.TeamId.ToString(), raw.State.ToString(),
+            raw.Deadline, raw.StartedAt, raw.StartedBy, suggestionCount, winnerName,
+            raw.WinnerChosenAtRandom, tieBreak);
+
+        return Results.Ok(dto);
     }
 
     private static async Task<IResult> StartVoting(

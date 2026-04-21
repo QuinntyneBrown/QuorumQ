@@ -9,6 +9,7 @@ public class LunchSession
     public SessionState State { get; set; }
     public DateTime Deadline { get; set; }
     public DateTime? TieBreakDeadline { get; set; }
+    public string? TiedSuggestionIdsJson { get; set; }
     public Guid StartedBy { get; set; }
     public DateTime StartedAt { get; set; }
     public DateTime? DecidedAt { get; set; }
