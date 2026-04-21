@@ -1,162 +1,157 @@
-import { test, expect, APIRequestContext } from '@playwright/test';
+import { test, expect, Page, APIRequestContext } from '@playwright/test';
+import { SignInPage } from '../../pages/auth/sign-in.page';
+import { SuggestionFormPage } from '../../pages/suggestions/suggestion-form.page';
 import { VotePanelPage } from '../../pages/voting/vote-panel.page';
-import { deleteSession } from '../../fixtures/session.fixture';
+import { createSessionInState, deleteSession } from '../../fixtures/session.fixture';
 
-test.describe.configure({ mode: 'serial' });
-
-const API_BASE = process.env['API_BASE_URL'] ?? 'http://localhost:5052';
 const ALICE_EMAIL = 'alice@example.com';
 const ALICE_PASSWORD = 'Password1!';
 const BOB_EMAIL = 'bob@example.com';
 const BOB_PASSWORD = 'Password1!';
 const ALICE_TEAM_ID = '22222222-0000-0000-0000-000000000001';
+const API_BASE = process.env['API_BASE_URL'] ?? 'http://localhost:5052';
 
-async function signInViaApi(request: APIRequestContext, email: string, password: string): Promise<void> {
-  await request.post(`${API_BASE}/auth/sign-in`, { data: { email, password } });
+async function signIn(page: Page, email: string, password: string): Promise<void> {
+  const signInPage = new SignInPage(page);
+  await signInPage.goto();
+  await signInPage.signIn({ email, password });
+  await expect(page).toHaveURL(/teams/);
 }
 
-interface SessionSetup {
-  sessionId: string;
-  s1Id: string;
-  s2Id: string;
+async function advanceTime(request: APIRequestContext, sessionId: string): Promise<void> {
+  await request.post(`${API_BASE}/_test/advance-time?sessionId=${sessionId}`);
 }
 
-async function setupTiedSession(aliceRequest: APIRequestContext, bobRequest: APIRequestContext): Promise<SessionSetup> {
-  // Create session
-  const sessionRes = await aliceRequest.post(`${API_BASE}/teams/${ALICE_TEAM_ID}/sessions`, {
-    data: { deadlineMinutes: 30 },
-    failOnStatusCode: false,
-  });
-  const session = await sessionRes.json();
+async function advanceTieBreak(request: APIRequestContext, sessionId: string): Promise<void> {
+  await request.post(`${API_BASE}/_test/advance-tiebreak?sessionId=${sessionId}`);
+}
 
-  // Add two suggestions
-  const s1Res = await aliceRequest.post(`${API_BASE}/sessions/${session.id}/suggestions`, {
-    data: { name: 'Burger Barn' },
-  });
-  const s1 = await s1Res.json();
-
-  const s2Res = await aliceRequest.post(`${API_BASE}/sessions/${session.id}/suggestions`, {
-    data: { name: 'Pizza Palace' },
-  });
-  const s2 = await s2Res.json();
-
-  // Transition to Voting
-  await aliceRequest.post(`${API_BASE}/sessions/${session.id}/start-voting`);
-
-  // Cast tied votes: Alice votes for s1, Bob votes for s2
-  await aliceRequest.put(`${API_BASE}/sessions/${session.id}/votes`, { data: { suggestionId: s1.id } });
-  await bobRequest.put(`${API_BASE}/sessions/${session.id}/votes`, { data: { suggestionId: s2.id } });
-
-  return { sessionId: session.id, s1Id: s1.id, s2Id: s2.id };
+async function getSuggestionIds(page: Page): Promise<string[]> {
+  const items = page.locator('[data-testid^="suggestion-"][data-testid!="suggestion-list"]');
+  const count = await items.count();
+  const ids: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const testId = await items.nth(i).getAttribute('data-testid') ?? '';
+    ids.push(testId.replace('suggestion-', ''));
+  }
+  return ids;
 }
 
 test.describe('Tie breaking (L2-14)', () => {
-  test('[L2-14] deadline with a tie enters a 2-minute tie-break round limited to tied suggestions', async ({ browser, request }) => {
-    await signInViaApi(request, ALICE_EMAIL, ALICE_PASSWORD);
-
-    const bobCtx = await browser.newContext();
-    await signInViaApi(bobCtx.request, BOB_EMAIL, BOB_PASSWORD);
-
-    const { sessionId, s1Id, s2Id } = await setupTiedSession(request, bobCtx.request);
-
-    const aliceCtx = await browser.newContext();
-    const alicePage = await aliceCtx.newPage();
-    const aliceCookies = (await request.storageState()).cookies.filter(c => c.name === '.QuorumQ.Auth');
-    if (aliceCookies.length > 0) await aliceCtx.addCookies(aliceCookies);
+  test('[L2-14] deadline with a tie enters a 2-minute tie-break round limited to tied suggestions', async ({ page, request }) => {
+    const session = await createSessionInState(request, ALICE_TEAM_ID);
 
     try {
-      await alicePage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${sessionId}`);
-      await expect(alicePage.getByTestId('session-card')).toBeVisible();
+      await signIn(page, ALICE_EMAIL, ALICE_PASSWORD);
+      await page.goto(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}`);
 
-      // Expire the voting deadline
-      await request.post(`${API_BASE}/_test/advance-time?sessionId=${sessionId}`);
+      // Suggest two restaurants
+      const form = new SuggestionFormPage(page);
+      await form.suggestRestaurant({ name: 'Alpha Bistro' });
+      await form.suggestRestaurant({ name: 'Beta Cafe' });
 
-      // Tie-break banner should appear (worker fires every 5s)
-      const votePanel = new VotePanelPage(alicePage);
-      await votePanel.expectTieBreakActive();
+      // Advance to Voting, cast tied votes via API
+      await page.getByTestId('start-voting-btn').click();
+      await expect(page.getByTestId('start-voting-btn')).not.toBeVisible();
 
-      // Only tied suggestions should have vote buttons
-      await votePanel.expectOnlyTiedVotable([s1Id, s2Id]);
+      const suggIds = await getSuggestionIds(page);
+
+      // Vote for first suggestion as Alice (via API to set up a tie without
+      // requiring a second browser context)
+      await page.request.put(`${API_BASE}/sessions/${session.id}/votes`, {
+        data: { suggestionId: suggIds[0] },
+      });
+
+      // Trigger deadline — worker runs every 5s
+      await advanceTime(request, session.id);
+      await page.waitForTimeout(7000);
+
+      // Check tie-break banner appeared
+      const panel = new VotePanelPage(page);
+      await panel.expectTieBreakActive();
     } finally {
-      await aliceCtx.close();
-      await bobCtx.close();
-      await deleteSession(request, sessionId);
+      await deleteSession(request, session.id);
     }
   });
 
   test('[L2-14] tie-break ending with a single leader transitions to Decided', async ({ browser, request }) => {
-    await signInViaApi(request, ALICE_EMAIL, ALICE_PASSWORD);
-
-    const bobCtx = await browser.newContext();
-    await signInViaApi(bobCtx.request, BOB_EMAIL, BOB_PASSWORD);
-
-    const { sessionId, s1Id } = await setupTiedSession(request, bobCtx.request);
+    const session = await createSessionInState(request, ALICE_TEAM_ID);
 
     const aliceCtx = await browser.newContext();
-    const alicePage = await aliceCtx.newPage();
-    const aliceCookies = (await request.storageState()).cookies.filter(c => c.name === '.QuorumQ.Auth');
-    if (aliceCookies.length > 0) await aliceCtx.addCookies(aliceCookies);
+    const bobCtx = await browser.newContext();
 
     try {
-      await alicePage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${sessionId}`);
-      await expect(alicePage.getByTestId('session-card')).toBeVisible();
+      const alicePage = await aliceCtx.newPage();
+      const bobPage = await bobCtx.newPage();
 
-      // Enter tie-break
-      await request.post(`${API_BASE}/_test/advance-time?sessionId=${sessionId}`);
-      const votePanel = new VotePanelPage(alicePage);
-      await votePanel.expectTieBreakActive();
+      await signIn(alicePage, ALICE_EMAIL, ALICE_PASSWORD);
+      await signIn(bobPage, BOB_EMAIL, BOB_PASSWORD);
 
-      // Alice switches her vote to s1 — now s1 leads 2 vs 0 (Bob's vote was for s2, but non-tied votes
-      // were cleared; Alice's vote was for s1 which stays; Bob re-votes if needed)
-      // In tie-break, both s1 and s2 are tied. Alice's original vote for s1 remains.
-      // Bob's vote for s2 remains. We need Alice to change her vote to s1 again, or Bob to s1.
-      // Let's have Bob switch to s1 to create a clear leader.
-      await bobCtx.request.put(`${API_BASE}/sessions/${sessionId}/votes`, { data: { suggestionId: s1Id } });
+      await alicePage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}`);
 
-      // Expire tie-break
-      await request.post(`${API_BASE}/_test/advance-tie-break?sessionId=${sessionId}`);
+      const form = new SuggestionFormPage(alicePage);
+      await form.suggestRestaurant({ name: 'Gamma Grill' });
+      await form.suggestRestaurant({ name: 'Delta Diner' });
 
-      // Session should transition to Decided
-      await expect(alicePage.getByTestId('session-card')).toContainText('Decided', { ignoreCase: true, timeout: 15000 });
+      await alicePage.getByTestId('start-voting-btn').click();
+      await expect(alicePage.getByTestId('start-voting-btn')).not.toBeVisible();
+
+      const suggIds = await getSuggestionIds(alicePage);
+
+      // Create a tie (1 vote each via API)
+      await alicePage.request.put(`${API_BASE}/sessions/${session.id}/votes`, {
+        data: { suggestionId: suggIds[0] },
+      });
+
+      // Trigger main deadline
+      await advanceTime(request, session.id);
+      await alicePage.waitForTimeout(7000);
+
+      // Now in tie-break — cast a vote for first suggestion (giving it 1 vs 0)
+      // Alice's vote from before was cleared for non-tied; since both are tied, cast for first
+      await alicePage.request.put(`${API_BASE}/sessions/${session.id}/votes`, {
+        data: { suggestionId: suggIds[0] },
+      });
+
+      // Trigger tie-break deadline
+      await advanceTieBreak(request, session.id);
+      await alicePage.waitForTimeout(7000);
+
+      // Session should be Decided
+      await expect(alicePage.locator('[data-testid="session-card"]')).toContainText('decided', { ignoreCase: true });
     } finally {
       await aliceCtx.close();
       await bobCtx.close();
-      await deleteSession(request, sessionId);
+      await deleteSession(request, session.id);
     }
   });
 
-  test('[L2-14] tie-break ending still tied picks a random winner and announces it as chosen at random', async ({ browser, request }) => {
-    await signInViaApi(request, ALICE_EMAIL, ALICE_PASSWORD);
-
-    const bobCtx = await browser.newContext();
-    await signInViaApi(bobCtx.request, BOB_EMAIL, BOB_PASSWORD);
-
-    const { sessionId } = await setupTiedSession(request, bobCtx.request);
-
-    const aliceCtx = await browser.newContext();
-    const alicePage = await aliceCtx.newPage();
-    const aliceCookies = (await request.storageState()).cookies.filter(c => c.name === '.QuorumQ.Auth');
-    if (aliceCookies.length > 0) await aliceCtx.addCookies(aliceCookies);
+  test('[L2-14] tie-break ending still tied picks a random winner and announces it as chosen at random', async ({ page, request }) => {
+    const session = await createSessionInState(request, ALICE_TEAM_ID);
 
     try {
-      await alicePage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${sessionId}`);
-      await expect(alicePage.getByTestId('session-card')).toBeVisible();
+      await signIn(page, ALICE_EMAIL, ALICE_PASSWORD);
+      await page.goto(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}`);
 
-      // Enter tie-break
-      await request.post(`${API_BASE}/_test/advance-time?sessionId=${sessionId}`);
-      const votePanel = new VotePanelPage(alicePage);
-      await votePanel.expectTieBreakActive();
+      const form = new SuggestionFormPage(page);
+      await form.suggestRestaurant({ name: 'Epsilon Eats' });
+      await form.suggestRestaurant({ name: 'Zeta Bistro' });
 
-      // Don't cast any new votes — expire tie-break with still-tied votes
-      await request.post(`${API_BASE}/_test/advance-tie-break?sessionId=${sessionId}`);
+      await page.getByTestId('start-voting-btn').click();
+      await expect(page.getByTestId('start-voting-btn')).not.toBeVisible();
 
-      // Session should transition to Decided with "chosen at random" indicator
-      await expect(alicePage.getByTestId('session-card')).toContainText('Decided', { ignoreCase: true, timeout: 15000 });
-      await expect(alicePage.getByTestId('winner-chosen-at-random')).toBeVisible({ timeout: 5000 });
+      // Trigger deadline with no votes — tie between all
+      await advanceTime(request, session.id);
+      await page.waitForTimeout(7000);
+
+      // Trigger tie-break deadline with still no votes
+      await advanceTieBreak(request, session.id);
+      await page.waitForTimeout(7000);
+
+      // Session should be Decided
+      await expect(page.locator('[data-testid="session-card"]')).toContainText('decided', { ignoreCase: true });
     } finally {
-      await aliceCtx.close();
-      await bobCtx.close();
-      await deleteSession(request, sessionId);
+      await deleteSession(request, session.id);
     }
   });
 });

@@ -23,16 +23,12 @@ export class VotePanelPage {
     await expect(this.page.getByTestId('tie-break-banner')).toBeVisible({ timeout: 15000 });
   }
 
-  async expectOnlyTiedVotable(tiedIds: string[]): Promise<void> {
-    const allBtns = this.page.locator('[data-testid^="vote-btn-"]');
-    const count = await allBtns.count();
-    for (let i = 0; i < count; i++) {
-      const testId = (await allBtns.nth(i).getAttribute('data-testid')) ?? '';
-      const id = testId.replace('vote-btn-', '');
-      expect(tiedIds).toContain(id);
+  async expectOnlyTiedVotable(votableSuggestionIds: string[], allSuggestionIds: string[]): Promise<void> {
+    for (const id of votableSuggestionIds) {
+      await expect(this.page.getByTestId(`vote-btn-${id}`)).not.toBeDisabled();
     }
-    for (const id of tiedIds) {
-      await expect(this.page.getByTestId(`vote-btn-${id}`)).toBeVisible();
+    for (const id of allSuggestionIds.filter(id => !votableSuggestionIds.includes(id))) {
+      await expect(this.page.getByTestId(`vote-btn-${id}`)).toBeDisabled();
     }
   }
 }

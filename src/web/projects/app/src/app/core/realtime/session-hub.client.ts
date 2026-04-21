@@ -6,7 +6,7 @@ export type HubEventName =
   | 'SuggestionAdded' | 'SuggestionWithdrawn'
   | 'VoteChanged'
   | 'CommentAdded' | 'CommentEdited' | 'CommentDeleted'
-  | 'StateChanged' | 'Decided' | 'TieBreakStarted'
+  | 'StateChanged' | 'TieBreakStarted' | 'Decided'
   | 'PresenceChanged';
 
 @Injectable({ providedIn: 'root' })

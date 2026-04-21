@@ -9,12 +9,12 @@ public class LunchSession
     public SessionState State { get; set; }
     public DateTime Deadline { get; set; }
     public DateTime? TieBreakDeadline { get; set; }
+    public string? TiedSuggestionIdsJson { get; set; }
     public Guid StartedBy { get; set; }
     public DateTime StartedAt { get; set; }
     public DateTime? DecidedAt { get; set; }
     public Guid? WinnerSuggestionId { get; set; }
     public bool WinnerChosenAtRandom { get; set; }
-    public string? TiedSuggestionIds { get; set; }
 
     public Team Team { get; set; } = null!;
     public ICollection<Suggestion> Suggestions { get; set; } = [];

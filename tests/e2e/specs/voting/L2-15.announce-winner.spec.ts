@@ -170,7 +170,7 @@ test.describe('Winner reveal (L2-15)', () => {
       await expect(alicePage.getByTestId('tie-break-banner')).toBeVisible({ timeout: 15000 });
 
       // Expire tie-break with still-tied votes (no new votes)
-      await request.post(`${API_BASE}/_test/advance-tie-break?sessionId=${session.id}`);
+      await request.post(`${API_BASE}/_test/advance-tiebreak?sessionId=${session.id}`);
 
       const winnerPath = new RegExp(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}/winner`);
       await alicePage.waitForURL(winnerPath, { timeout: 15000 });

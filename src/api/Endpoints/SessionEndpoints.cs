@@ -13,7 +13,7 @@ public static class SessionEndpoints
 {
     private record StartSessionRequest(int DeadlineMinutes = 45);
 
-    private record TieBreakInfo(bool Active, List<Guid> TiedSuggestionIds, DateTime? Deadline);
+    private record TieBreakInfo(bool Active, Guid[] TiedSuggestionIds, DateTime? Deadline);
 
     private record SessionDetail(
         Guid Id, string TeamId, string State, DateTime Deadline, DateTime StartedAt,
@@ -95,51 +95,39 @@ public static class SessionEndpoints
     {
         var raw = await db.LunchSessions
             .AsNoTracking()
+            .Include(s => s.Suggestions).ThenInclude(sg => sg.Restaurant)
             .Where(s => s.Id == sessionId && s.TeamId == teamId)
-            .Select(s => new {
-                s.Id, TeamId = s.TeamId.ToString(), State = s.State.ToString(),
-                s.Deadline, s.StartedAt, s.StartedBy,
-                SuggestionCount = s.Suggestions.Count(),
-                WinnerName = s.WinnerSuggestionId != null
-                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
-                        .Select(sg => sg.Restaurant.Name).FirstOrDefault()
-                    : null,
-                WinnerCuisine = s.WinnerSuggestionId != null
-                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
-                        .Select(sg => sg.Restaurant.Cuisine).FirstOrDefault()
-                    : null,
-                WinnerAddress = s.WinnerSuggestionId != null
-                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
-                        .Select(sg => sg.Restaurant.Address).FirstOrDefault()
-                    : null,
-                WinnerWebsiteUrl = s.WinnerSuggestionId != null
-                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
-                        .Select(sg => sg.Restaurant.WebsiteUrl).FirstOrDefault()
-                    : null,
-                s.WinnerChosenAtRandom,
-                s.TieBreakDeadline,
-                s.TiedSuggestionIds,
-            })
             .FirstOrDefaultAsync();
 
         if (raw is null) return Results.NotFound();
 
-        var tiedIds = !string.IsNullOrEmpty(raw.TiedSuggestionIds)
-            ? JsonSerializer.Deserialize<List<Guid>>(raw.TiedSuggestionIds) ?? []
-            : new List<Guid>();
+        var suggestionCount = raw.Suggestions.Count(s => s.WithdrawnAt == null);
+        var winnerSuggestion = raw.WinnerSuggestionId is not null
+            ? raw.Suggestions.FirstOrDefault(sg => sg.Id == raw.WinnerSuggestionId)
+            : null;
+        var winnerName = winnerSuggestion?.Restaurant?.Name;
+        var winnerCuisine = winnerSuggestion?.Restaurant?.Cuisine;
+        var winnerAddress = winnerSuggestion?.Restaurant?.Address;
+        var winnerWebsiteUrl = winnerSuggestion?.Restaurant?.WebsiteUrl;
 
-        var tieBreak = raw.TieBreakDeadline.HasValue
-            ? new TieBreakInfo(Active: raw.State == "Voting", TiedSuggestionIds: tiedIds, Deadline: raw.TieBreakDeadline)
+        TieBreakInfo? tieBreak = null;
+        if (raw.State == SessionState.Voting && raw.TieBreakDeadline is not null)
+        {
+            var tiedIds = raw.TiedSuggestionIdsJson is not null
+                ? JsonSerializer.Deserialize<Guid[]>(raw.TiedSuggestionIdsJson) ?? []
+                : [];
+            tieBreak = new TieBreakInfo(true, tiedIds, raw.TieBreakDeadline);
+        }
+
+        var directionsUrl = winnerAddress is not null
+            ? $"https://maps.google.com/maps?q={Uri.EscapeDataString(winnerAddress)}"
             : null;
 
-        var directionsUrl = raw.WinnerAddress is not null
-            ? $"https://maps.google.com/maps?q={Uri.EscapeDataString(raw.WinnerAddress)}"
-            : null;
+        var dto = new SessionDetail(raw.Id, raw.TeamId.ToString(), raw.State.ToString(),
+            raw.Deadline, raw.StartedAt, raw.StartedBy, suggestionCount, winnerName, winnerCuisine,
+            raw.WinnerChosenAtRandom, tieBreak, directionsUrl, winnerWebsiteUrl);
 
-        return Results.Ok(new SessionDetail(
-            raw.Id, raw.TeamId, raw.State, raw.Deadline, raw.StartedAt,
-            raw.StartedBy, raw.SuggestionCount, raw.WinnerName, raw.WinnerCuisine,
-            raw.WinnerChosenAtRandom, tieBreak, directionsUrl, raw.WinnerWebsiteUrl));
+        return Results.Ok(dto);
     }
 
     private static async Task<IResult> StartVoting(

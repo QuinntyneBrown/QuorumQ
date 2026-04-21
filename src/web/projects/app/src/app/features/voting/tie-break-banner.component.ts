@@ -7,32 +7,28 @@ import { CountdownComponent } from '@components';
   imports: [CountdownComponent],
   template: `
     <div class="tie-break-banner" data-testid="tie-break-banner" role="alert">
-      <div class="header">
-        <strong>Tie-break round</strong>
-        <span class="hint">Only tied suggestions can be voted on</span>
+      <div class="tie-break-header">
+        <span class="tie-break-title">Tie-break round!</span>
+        <qq-countdown [deadline]="deadline" />
       </div>
-      @if (deadline) {
-        <qq-countdown class="countdown" [deadline]="deadline" />
-      }
+      <p class="tie-break-msg">
+        It's a tie — only the tied restaurants are votable now.
+      </p>
     </div>
   `,
   styles: [`
     .tie-break-banner {
       background: var(--mat-sys-tertiary-container);
       color: var(--mat-sys-on-tertiary-container);
-      border-radius: 12px;
-      padding: 14px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
+      padding: 12px 16px;
+      border-radius: 8px;
       margin-bottom: 16px;
     }
-    .header { display: flex; flex-direction: column; gap: 2px; }
-    .hint { font-size: 13px; opacity: 0.8; }
-    .countdown { font-size: 20px; font-weight: 700; }
+    .tie-break-header { display: flex; align-items: center; justify-content: space-between; }
+    .tie-break-title { font-weight: 600; }
+    .tie-break-msg { margin: 4px 0 0; font-size: 14px; }
   `],
 })
 export class TieBreakBannerComponent {
-  @Input() deadline: string | null = null;
+  @Input({ required: true }) deadline!: string;
 }

@@ -40,9 +40,8 @@ public sealed class SessionDeadlineWorker : BackgroundService
         var hub = scope.ServiceProvider.GetRequiredService<IHubContext<SessionHub, ISessionHubClient>>();
 
         var now = DateTime.UtcNow;
-        var changed = false;
 
-        // Phase 1: voting deadline expired, no tie-break in progress yet
+        // 1. Regular Voting deadline
         var expiredVoting = await db.LunchSessions
             .Where(s => s.State == SessionState.Voting && s.TieBreakDeadline == null && s.Deadline <= now)
             .Include(s => s.Votes)
@@ -51,118 +50,120 @@ public sealed class SessionDeadlineWorker : BackgroundService
 
         foreach (var session in expiredVoting)
         {
-            var activeSuggIds = session.Suggestions
-                .Where(sg => sg.WithdrawnAt == null)
-                .Select(sg => sg.Id)
-                .ToHashSet();
-
-            var groups = session.Votes
-                .Where(v => activeSuggIds.Contains(v.SuggestionId))
-                .GroupBy(v => v.SuggestionId)
-                .Select(g => (SuggestionId: g.Key, Count: g.Count()))
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            if (groups.Count == 0)
-            {
-                // No votes — pick random from active suggestions (or null)
-                var candidates = activeSuggIds.ToList();
-                var winnerId = candidates.Count > 0
-                    ? candidates[Random.Shared.Next(candidates.Count)]
-                    : (Guid?)null;
-                session.State = SessionState.Decided;
-                session.DecidedAt = now;
-                session.WinnerSuggestionId = winnerId;
-                session.WinnerChosenAtRandom = winnerId.HasValue;
-                await hub.Clients.Group(SessionHub.GroupName(session.Id))
-                    .Decided(new { sessionId = session.Id, state = "Decided", winnerId, chosenAtRandom = session.WinnerChosenAtRandom });
-            }
-            else
-            {
-                var maxCount = groups[0].Count;
-                var tied = groups.Where(x => x.Count == maxCount).Select(x => x.SuggestionId).ToList();
-
-                if (tied.Count == 1)
-                {
-                    session.State = SessionState.Decided;
-                    session.DecidedAt = now;
-                    session.WinnerSuggestionId = tied[0];
-                    await hub.Clients.Group(SessionHub.GroupName(session.Id))
-                        .Decided(new { sessionId = session.Id, state = "Decided", winnerId = tied[0], chosenAtRandom = false });
-                }
-                else
-                {
-                    // Tie — enter tie-break round
-                    session.TieBreakDeadline = now.AddMinutes(2);
-                    session.TiedSuggestionIds = JsonSerializer.Serialize(tied);
-
-                    // Clear votes for non-tied suggestions
-                    var nonTiedVotes = session.Votes.Where(v => !tied.Contains(v.SuggestionId)).ToList();
-                    db.Votes.RemoveRange(nonTiedVotes);
-
-                    await hub.Clients.Group(SessionHub.GroupName(session.Id))
-                        .TieBreakStarted(new { sessionId = session.Id, tiedSuggestionIds = tied, deadline = session.TieBreakDeadline });
-                }
-            }
-            changed = true;
+            await HandleVotingDeadline(session, now, db, hub);
         }
 
-        // Phase 2: tie-break deadline expired
-        var expiredTieBreak = await db.LunchSessions
+        // 2. Tie-break deadline
+        var expiredTieBreaks = await db.LunchSessions
             .Where(s => s.State == SessionState.Voting && s.TieBreakDeadline != null && s.TieBreakDeadline <= now)
             .Include(s => s.Votes)
+            .Include(s => s.Suggestions)
             .ToListAsync(ct);
 
-        foreach (var session in expiredTieBreak)
+        foreach (var session in expiredTieBreaks)
         {
-            var tiedIds = !string.IsNullOrEmpty(session.TiedSuggestionIds)
-                ? JsonSerializer.Deserialize<List<Guid>>(session.TiedSuggestionIds)!
-                : new List<Guid>();
-
-            var groups = session.Votes
-                .Where(v => tiedIds.Contains(v.SuggestionId))
-                .GroupBy(v => v.SuggestionId)
-                .Select(g => (SuggestionId: g.Key, Count: g.Count()))
-                .OrderByDescending(x => x.Count)
-                .ToList();
-
-            Guid? winnerId;
-            bool chosenAtRandom;
-
-            if (groups.Count > 0)
-            {
-                var maxCount = groups[0].Count;
-                var leaders = groups.Where(x => x.Count == maxCount).Select(x => x.SuggestionId).ToList();
-                if (leaders.Count == 1)
-                {
-                    winnerId = leaders[0];
-                    chosenAtRandom = false;
-                }
-                else
-                {
-                    winnerId = leaders[Random.Shared.Next(leaders.Count)];
-                    chosenAtRandom = true;
-                }
-            }
-            else
-            {
-                // No votes in tie-break — pick random from tied candidates
-                winnerId = tiedIds.Count > 0 ? tiedIds[Random.Shared.Next(tiedIds.Count)] : (Guid?)null;
-                chosenAtRandom = winnerId.HasValue;
-            }
-
-            session.State = SessionState.Decided;
-            session.DecidedAt = now;
-            session.WinnerSuggestionId = winnerId;
-            session.WinnerChosenAtRandom = chosenAtRandom;
-
-            await hub.Clients.Group(SessionHub.GroupName(session.Id))
-                .Decided(new { sessionId = session.Id, state = "Decided", winnerId, chosenAtRandom });
-
-            changed = true;
+            await HandleTieBreakDeadline(session, now, db, hub);
         }
 
-        if (changed)
+        if (expiredVoting.Count + expiredTieBreaks.Count > 0)
             await db.SaveChangesAsync(ct);
+    }
+
+    private static async Task HandleVotingDeadline(
+        LunchSession session, DateTime now, AppDbContext db,
+        IHubContext<SessionHub, ISessionHubClient> hub)
+    {
+        var activeSuggestions = session.Suggestions.Where(s => s.WithdrawnAt == null).ToList();
+        var tallies = session.Votes
+            .Where(v => activeSuggestions.Any(s => s.Id == v.SuggestionId))
+            .GroupBy(v => v.SuggestionId)
+            .Select(g => (SuggestionId: g.Key, Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+        var topCount = tallies.FirstOrDefault().Count;
+
+        // Build tied list: either top-voted or all (when 0 votes)
+        List<Guid> tiedIds;
+        if (topCount == 0)
+        {
+            tiedIds = activeSuggestions.Select(s => s.Id).ToList();
+        }
+        else
+        {
+            tiedIds = tallies.Where(x => x.Count == topCount).Select(x => x.SuggestionId).ToList();
+        }
+
+        if (tiedIds.Count == 1)
+        {
+            // Clear winner
+            session.State = SessionState.Decided;
+            session.DecidedAt = now;
+            session.WinnerSuggestionId = tiedIds[0];
+
+            await hub.Clients.Group(SessionHub.GroupName(session.Id))
+                .Decided(new { sessionId = session.Id, state = "Decided", winnerId = tiedIds[0] });
+        }
+        else
+        {
+            // Start tie-break
+            session.TieBreakDeadline = now.AddMinutes(2);
+            session.TiedSuggestionIdsJson = JsonSerializer.Serialize(tiedIds);
+
+            // Clear votes for non-tied suggestions
+            var nonTiedVotes = session.Votes.Where(v => !tiedIds.Contains(v.SuggestionId)).ToList();
+            db.Votes.RemoveRange(nonTiedVotes);
+
+            await hub.Clients.Group(SessionHub.GroupName(session.Id))
+                .TieBreakStarted(new
+                {
+                    sessionId = session.Id,
+                    tiedSuggestionIds = tiedIds,
+                    tieBreakDeadline = session.TieBreakDeadline,
+                });
+        }
+    }
+
+    private static async Task HandleTieBreakDeadline(
+        LunchSession session, DateTime now, AppDbContext db,
+        IHubContext<SessionHub, ISessionHubClient> hub)
+    {
+        var tiedIds = session.TiedSuggestionIdsJson is not null
+            ? JsonSerializer.Deserialize<List<Guid>>(session.TiedSuggestionIdsJson) ?? []
+            : session.Suggestions.Where(s => s.WithdrawnAt == null).Select(s => s.Id).ToList();
+
+        var tallies = session.Votes
+            .Where(v => tiedIds.Contains(v.SuggestionId))
+            .GroupBy(v => v.SuggestionId)
+            .Select(g => (SuggestionId: g.Key, Count: g.Count()))
+            .OrderByDescending(x => x.Count)
+            .ToList();
+
+        var topCount = tallies.FirstOrDefault().Count;
+        List<Guid> topIds = topCount > 0
+            ? tallies.Where(x => x.Count == topCount).Select(x => x.SuggestionId).ToList()
+            : tiedIds;
+
+        Guid winnerId;
+        bool chosenAtRandom;
+
+        if (topIds.Count == 1)
+        {
+            winnerId = topIds[0];
+            chosenAtRandom = false;
+        }
+        else
+        {
+            winnerId = topIds[Random.Shared.Next(topIds.Count)];
+            chosenAtRandom = true;
+        }
+
+        session.State = SessionState.Decided;
+        session.DecidedAt = now;
+        session.WinnerSuggestionId = winnerId;
+        session.WinnerChosenAtRandom = chosenAtRandom;
+
+        await hub.Clients.Group(SessionHub.GroupName(session.Id))
+            .Decided(new { sessionId = session.Id, state = "Decided", winnerId, chosenAtRandom });
     }
 }

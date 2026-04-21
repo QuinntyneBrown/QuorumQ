@@ -44,6 +44,7 @@ interface VoteTally {
                       [restaurantName]="s.restaurantName"
                       [voteCount]="s.voteCount"
                       [youVoted]="s.youVoted"
+                      [disabled]="tiedSuggestionIds.length > 0 && !tiedSuggestionIds.includes(s.id)"
                       (toggle)="castVote($event)"
                     />
                   }

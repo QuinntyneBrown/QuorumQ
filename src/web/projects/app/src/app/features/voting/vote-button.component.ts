@@ -10,10 +10,11 @@ import { MatIconModule } from '@angular/material/icon';
     <button
       mat-stroked-button
       [class.voted]="youVoted"
+      [disabled]="disabled"
       [attr.data-testid]="'vote-btn-' + suggestionId"
       [attr.aria-pressed]="youVoted"
       [attr.aria-label]="youVoted ? 'Clear vote for ' + restaurantName : 'Vote for ' + restaurantName"
-      (click)="toggle.emit(suggestionId)"
+      (click)="!disabled && toggle.emit(suggestionId)"
     >
       <mat-icon>thumb_up</mat-icon>
       {{ voteCount }}
@@ -33,5 +34,6 @@ export class VoteButtonComponent {
   @Input({ required: true }) restaurantName!: string;
   @Input() voteCount = 0;
   @Input() youVoted = false;
+  @Input() disabled = false;
   @Output() toggle = new EventEmitter<string>();
 }
