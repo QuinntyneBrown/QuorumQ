@@ -17,8 +17,9 @@ public static class SessionEndpoints
 
     private record SessionDetail(
         Guid Id, string TeamId, string State, DateTime Deadline, DateTime StartedAt,
-        Guid StartedBy, int SuggestionCount, string? WinnerName,
-        bool WinnerChosenAtRandom, TieBreakInfo? TieBreak);
+        Guid StartedBy, int SuggestionCount, string? WinnerName, string? WinnerCuisine,
+        bool WinnerChosenAtRandom, TieBreakInfo? TieBreak,
+        string? DirectionsUrl, string? WebsiteUrl);
 
     public static IEndpointRouteBuilder MapSessionEndpoints(this IEndpointRouteBuilder app)
     {
@@ -62,7 +63,7 @@ public static class SessionEndpoints
                    (s.State == SessionState.Suggesting || s.State == SessionState.Voting))
             .Select(s => new SessionDetail(
                 s.Id, s.TeamId.ToString(), s.State.ToString(), s.Deadline, s.StartedAt,
-                s.StartedBy, s.Suggestions.Count(), null, false, null))
+                s.StartedBy, s.Suggestions.Count(), null, null, false, null, null, null))
             .FirstOrDefaultAsync();
 
         if (existing is not null)
@@ -84,7 +85,7 @@ public static class SessionEndpoints
         return Results.Created(
             $"/teams/{teamId}/sessions/{session.Id}",
             new SessionDetail(session.Id, teamId.ToString(), session.State.ToString(),
-                session.Deadline, session.StartedAt, session.StartedBy, 0, null, false, null));
+                session.Deadline, session.StartedAt, session.StartedBy, 0, null, null, false, null, null, null));
     }
 
     private static async Task<IResult> GetSession(
@@ -103,6 +104,18 @@ public static class SessionEndpoints
                     ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
                         .Select(sg => sg.Restaurant.Name).FirstOrDefault()
                     : null,
+                WinnerCuisine = s.WinnerSuggestionId != null
+                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
+                        .Select(sg => sg.Restaurant.Cuisine).FirstOrDefault()
+                    : null,
+                WinnerAddress = s.WinnerSuggestionId != null
+                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
+                        .Select(sg => sg.Restaurant.Address).FirstOrDefault()
+                    : null,
+                WinnerWebsiteUrl = s.WinnerSuggestionId != null
+                    ? s.Suggestions.Where(sg => sg.Id == s.WinnerSuggestionId)
+                        .Select(sg => sg.Restaurant.WebsiteUrl).FirstOrDefault()
+                    : null,
                 s.WinnerChosenAtRandom,
                 s.TieBreakDeadline,
                 s.TiedSuggestionIds,
@@ -119,10 +132,14 @@ public static class SessionEndpoints
             ? new TieBreakInfo(Active: raw.State == "Voting", TiedSuggestionIds: tiedIds, Deadline: raw.TieBreakDeadline)
             : null;
 
+        var directionsUrl = raw.WinnerAddress is not null
+            ? $"https://maps.google.com/maps?q={Uri.EscapeDataString(raw.WinnerAddress)}"
+            : null;
+
         return Results.Ok(new SessionDetail(
             raw.Id, raw.TeamId, raw.State, raw.Deadline, raw.StartedAt,
-            raw.StartedBy, raw.SuggestionCount, raw.WinnerName,
-            raw.WinnerChosenAtRandom, tieBreak));
+            raw.StartedBy, raw.SuggestionCount, raw.WinnerName, raw.WinnerCuisine,
+            raw.WinnerChosenAtRandom, tieBreak, directionsUrl, raw.WinnerWebsiteUrl));
     }
 
     private static async Task<IResult> StartVoting(
@@ -144,7 +161,7 @@ public static class SessionEndpoints
         await db.SaveChangesAsync();
 
         var dto = new SessionDetail(session.Id, session.TeamId.ToString(), session.State.ToString(),
-            session.Deadline, session.StartedAt, session.StartedBy, 0, null, false, null);
+            session.Deadline, session.StartedAt, session.StartedBy, 0, null, null, false, null, null, null);
         await hub.Clients.Group(SessionHub.GroupName(sessionId))
             .StateChanged(new { sessionId, state = session.State.ToString() });
 
@@ -170,7 +187,7 @@ public static class SessionEndpoints
         await db.SaveChangesAsync();
 
         var dto = new SessionDetail(session.Id, session.TeamId.ToString(), session.State.ToString(),
-            session.Deadline, session.StartedAt, session.StartedBy, 0, null, false, null);
+            session.Deadline, session.StartedAt, session.StartedBy, 0, null, null, false, null, null, null);
         await hub.Clients.Group(SessionHub.GroupName(sessionId))
             .StateChanged(new { sessionId, state = session.State.ToString() });
 
