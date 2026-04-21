@@ -50,4 +50,29 @@ public class TeamNotificationHub : Hub<ITeamNotificationClient>
         await Groups.AddToGroupAsync(Context.ConnectionId, GroupName(teamId));
         await base.OnConnectedAsync();
     }
+
+    public static async Task SendToNonMutedMembersAsync(
+        AppDbContext db,
+        IHubContext<TeamNotificationHub, ITeamNotificationClient> hub,
+        Guid teamId,
+        object payload,
+        CancellationToken ct = default)
+    {
+        var memberIds = await db.Memberships
+            .AsNoTracking()
+            .Where(m => m.TeamId == teamId)
+            .Select(m => m.UserId)
+            .ToListAsync(ct);
+
+        var mutedIds = await db.NotificationPreferences
+            .AsNoTracking()
+            .Where(p => p.TeamId == teamId && p.Muted && memberIds.Contains(p.UserId))
+            .Select(p => p.UserId)
+            .ToHashSetAsync(ct);
+
+        foreach (var userId in memberIds.Where(id => !mutedIds.Contains(id)))
+        {
+            await hub.Clients.User(userId.ToString()).SessionEvent(payload);
+        }
+    }
 }

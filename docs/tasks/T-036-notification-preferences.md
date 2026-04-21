@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/10-screens-settings.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/settings/`), §4
-**Status:** Open
+**Status:** Complete
 
 ## Goal
 

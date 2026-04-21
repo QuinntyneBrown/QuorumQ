@@ -56,8 +56,8 @@ public sealed class SessionDeadlineWorker : BackgroundService
             session.FiveMinutesFired = true;
             await hub.Clients.Group(SessionHub.GroupName(session.Id))
                 .FiveMinuteWarning(new { sessionId = session.Id });
-            await teamHub.Clients.Group(TeamNotificationHub.GroupName(session.TeamId))
-                .SessionEvent(new { kind = "fiveMinutes", sessionId = session.Id, teamId = session.TeamId });
+            await TeamNotificationHub.SendToNonMutedMembersAsync(db, teamHub, session.TeamId,
+                new { kind = "fiveMinutes", sessionId = session.Id, teamId = session.TeamId }, ct);
         }
 
         // 2. Regular Voting deadline
@@ -125,8 +125,8 @@ public sealed class SessionDeadlineWorker : BackgroundService
                 .Decided(new { sessionId = session.Id, state = "Decided", winnerId = tiedIds[0] });
 
             var winnerName = session.Suggestions.FirstOrDefault(s => s.Id == tiedIds[0])?.Restaurant?.Name ?? "";
-            await teamHub.Clients.Group(TeamNotificationHub.GroupName(session.TeamId))
-                .SessionEvent(new { kind = "decided", sessionId = session.Id, teamId = session.TeamId, winnerName });
+            await TeamNotificationHub.SendToNonMutedMembersAsync(db, teamHub, session.TeamId,
+                new { kind = "decided", sessionId = session.Id, teamId = session.TeamId, winnerName });
         }
         else
         {
@@ -192,7 +192,7 @@ public sealed class SessionDeadlineWorker : BackgroundService
             .Decided(new { sessionId = session.Id, state = "Decided", winnerId, chosenAtRandom });
 
         var winnerName = session.Suggestions.FirstOrDefault(s => s.Id == winnerId)?.Restaurant?.Name ?? "";
-        await teamHub.Clients.Group(TeamNotificationHub.GroupName(session.TeamId))
-            .SessionEvent(new { kind = "decided", sessionId = session.Id, teamId = session.TeamId, winnerName });
+        await TeamNotificationHub.SendToNonMutedMembersAsync(db, teamHub, session.TeamId,
+            new { kind = "decided", sessionId = session.Id, teamId = session.TeamId, winnerName });
     }
 }

@@ -12,7 +12,7 @@ export const settingsRoutes: Routes = [
       },
       {
         path: 'notifications',
-        loadComponent: () => import('./notifications-stub.page').then(m => m.NotificationsStubPage),
+        loadComponent: () => import('./notification-settings.page').then(m => m.NotificationSettingsPage),
       },
       {
         path: 'theme',
