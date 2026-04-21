@@ -8,7 +8,8 @@
     "build": "ng build app && ng build components",
     "watch": "ng build app --watch --configuration development",
     "test": "ng test",
-    "generate:api": "npx openapi-typescript http://localhost:5052/openapi/v1.json -o projects/app/src/app/core/api/generated/api.d.ts"
+    "generate:api": "npx openapi-typescript http://localhost:5052/openapi/v1.json -o projects/app/src/app/core/api/generated/api.d.ts",
+    "analyze": "ng build app --source-map && npx source-map-explorer dist/app/browser/*.js --html dist/app/browser/bundle-report.html"
   },
   "prettier": {
     "printWidth": 100,

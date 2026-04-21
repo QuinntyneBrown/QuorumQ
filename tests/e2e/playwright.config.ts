@@ -35,5 +35,16 @@ export default defineConfig({
       name: 'mobile-chrome',
       use: { ...devices['Pixel 5'] },
     },
+    {
+      name: 'perf-mobile',
+      use: {
+        ...devices['Pixel 5'],
+        // 4G throttling: ~9 Mbps down, ~750 kbps up, 170 ms RTT
+        launchOptions: {
+          args: ['--disable-dev-shm-usage'],
+        },
+      },
+      testMatch: '**/performance/**',
+    },
   ],
 });

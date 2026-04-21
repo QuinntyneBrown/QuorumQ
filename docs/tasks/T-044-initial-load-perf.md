@@ -5,7 +5,7 @@
 **Primary area:** frontend + e2e
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/performance/L2-29...`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -49,7 +49,7 @@ First contentful paint within 1.5 s on a mid-tier mobile over 4G. LCP under
 
 ## Definition of Done
 
-- [ ] Spec passes against a production build.
-- [ ] Bundle size check fails CI when over budget.
-- [ ] No SSR, no service worker introduced (L2-47 — unless a budget
+- [x] Spec passes against a production build.
+- [x] Bundle size check fails CI when over budget.
+- [x] No SSR, no service worker introduced (L2-47 — unless a budget
       failure cannot be fixed otherwise; requires an L2 change first).
