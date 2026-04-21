@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/13-notifications.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/notifications/`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
