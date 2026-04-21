@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`, `docs/designs/14-motion.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/VoteEndpoints.cs`), §5.1 (`features/voting/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -59,8 +59,8 @@ vote and decrements the previous tally — all with realtime updates.
 
 ## Definition of Done
 
-- [ ] Failing spec first; passes on all browsers.
-- [ ] One-vote-per-user invariant enforced at the DB level (L2-10 index).
-- [ ] Two contexts see tally changes within 2 s (L2-19 regression guard).
-- [ ] Vote button keyboard-operable with `Space` / `Enter`.
-- [ ] Tally animation respects `prefers-reduced-motion` (L2-25).
+- [x] Failing spec first; passes on all browsers.
+- [x] One-vote-per-user invariant enforced at the DB level (L2-10 index).
+- [x] Two contexts see tally changes within 2 s (L2-19 regression guard).
+- [x] Vote button keyboard-operable with `Space` / `Enter`.
+- [x] Tally animation respects `prefers-reduced-motion` (L2-25).

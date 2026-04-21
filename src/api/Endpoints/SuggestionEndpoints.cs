@@ -16,7 +16,7 @@ public static class SuggestionEndpoints
     private record SuggestionDto(
         Guid Id, Guid SessionId, Guid RestaurantId,
         string RestaurantName, string? Cuisine, string? Address, string? WebsiteUrl,
-        Guid SuggestedBy, string SuggestedByName, DateTime CreatedAt, int VoteCount);
+        Guid SuggestedBy, string SuggestedByName, DateTime CreatedAt, int VoteCount, bool YouVoted);
 
     private record DuplicatePayload(SuggestionDto ExistingSuggestion, string SuggestedBy);
 
@@ -168,8 +168,10 @@ public static class SuggestionEndpoints
         return Results.NoContent();
     }
 
-    private static async Task<IResult> GetSuggestions(Guid sessionId, AppDbContext db)
+    private static async Task<IResult> GetSuggestions(Guid sessionId, HttpContext ctx, AppDbContext db)
     {
+        Guid.TryParse(ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value, out var userId);
+
         var suggestions = await db.Suggestions
             .AsNoTracking()
             .Include(s => s.Restaurant)
@@ -185,17 +187,18 @@ public static class SuggestionEndpoints
                     .Select(u => u.DisplayName)
                     .FirstOrDefault() ?? "Unknown",
                 VoteCount = s.Votes.Count,
+                YouVoted = s.Votes.Any(v => v.UserId == userId),
             })
             .ToListAsync();
 
-        var dtos = suggestions.Select(x => ToDto(x.Suggestion, x.Restaurant, x.SuggestedByName, x.VoteCount));
+        var dtos = suggestions.Select(x => ToDto(x.Suggestion, x.Restaurant, x.SuggestedByName, x.VoteCount, x.YouVoted));
         return Results.Ok(dtos);
     }
 
-    private static SuggestionDto ToDto(Suggestion s, Restaurant r, string suggestedByName, int voteCount) =>
+    private static SuggestionDto ToDto(Suggestion s, Restaurant r, string suggestedByName, int voteCount, bool youVoted = false) =>
         new(s.Id, s.SessionId, s.RestaurantId,
             r.Name, r.Cuisine, r.Address, r.WebsiteUrl,
-            s.SuggestedBy, suggestedByName, s.CreatedAt, voteCount);
+            s.SuggestedBy, suggestedByName, s.CreatedAt, voteCount, youVoted);
 
     private static async Task<IResult> SearchRestaurants(
         Guid teamId,

@@ -20,6 +20,7 @@ export interface SuggestionDto {
   suggestedByName: string;
   createdAt: string;
   voteCount: number;
+  youVoted: boolean;
 }
 
 @Component({

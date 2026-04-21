@@ -7,13 +7,20 @@ import { MatDialog } from '@angular/material/dialog';
 import { AvatarComponent, CardComponent, ConfirmDialogComponent } from '@components';
 import { SessionHubClient } from '../../core/realtime/session-hub.client';
 import { SessionStore } from '../../core/auth/session.store';
+import { VoteButtonComponent } from '../voting/vote-button.component';
 import { environment } from '../../../environments/environment';
 import type { SuggestionDto } from './suggest-restaurant.component';
+
+interface VoteTally {
+  suggestionId: string;
+  count: number;
+  youVoted: boolean;
+}
 
 @Component({
   selector: 'app-suggestion-list',
   standalone: true,
-  imports: [MatChipsModule, MatButtonModule, MatIconModule, AvatarComponent, CardComponent],
+  imports: [MatChipsModule, MatButtonModule, MatIconModule, AvatarComponent, CardComponent, VoteButtonComponent],
   template: `
     @if (suggestions().length === 0) {
       <p class="empty" data-testid="no-suggestions">No suggestions yet. Be the first!</p>
@@ -29,6 +36,16 @@ import type { SuggestionDto } from './suggest-restaurant.component';
                     <mat-chip-set>
                       <mat-chip>{{ s.cuisine }}</mat-chip>
                     </mat-chip-set>
+                  }
+                  @if (sessionState === 'Voting') {
+                    <app-vote-button
+                      class="vote-btn-wrapper"
+                      [suggestionId]="s.id"
+                      [restaurantName]="s.restaurantName"
+                      [voteCount]="s.voteCount"
+                      [youVoted]="s.youVoted"
+                      (toggle)="castVote($event)"
+                    />
                   }
                   @if (canWithdraw(s)) {
                     <button
@@ -71,7 +88,8 @@ import type { SuggestionDto } from './suggest-restaurant.component';
     .card-body { padding: 12px 16px; }
     .restaurant-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
     .restaurant-name { font-weight: 600; font-size: 16px; }
-    .withdraw-btn { margin-left: auto; color: var(--mat-sys-error); }
+    .vote-btn-wrapper { margin-left: auto; }
+    .withdraw-btn { color: var(--mat-sys-error); }
     .address { font-size: 13px; color: var(--mat-sys-on-surface-variant); margin: 4px 0; }
     .website { font-size: 13px; color: var(--mat-sys-primary); display: block; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .meta { display: flex; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; color: var(--mat-sys-on-surface-variant); }
@@ -114,6 +132,24 @@ export class SuggestionListComponent implements OnInit, OnDestroy {
     });
   }
 
+  castVote(suggestionId: string): void {
+    this.http
+      .put<{ tallies: VoteTally[] }>(`${environment.apiBaseUrl}/sessions/${this.sessionId}/votes`, { suggestionId })
+      .subscribe({
+        next: res => this.applyTallies(res.tallies),
+        error: () => {},
+      });
+  }
+
+  private applyTallies(tallies: VoteTally[]): void {
+    this.suggestions.update(list =>
+      list.map(s => {
+        const t = tallies.find(x => x.suggestionId === s.id);
+        return t ? { ...s, voteCount: t.count, youVoted: t.youVoted } : s;
+      })
+    );
+  }
+
   ngOnInit(): void {
     this.loadSuggestions();
     this.hub.on<SuggestionDto>('SuggestionAdded', dto => {
@@ -121,6 +157,9 @@ export class SuggestionListComponent implements OnInit, OnDestroy {
     });
     this.hub.on<{ id: string }>('SuggestionWithdrawn', payload => {
       this.suggestions.update(list => list.filter(s => s.id !== payload.id));
+    });
+    this.hub.on<{ tallies: VoteTally[] }>('VoteChanged', payload => {
+      this.applyTallies(payload.tallies);
     });
   }
 
@@ -133,5 +172,6 @@ export class SuggestionListComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.hub.off('SuggestionAdded');
     this.hub.off('SuggestionWithdrawn');
+    this.hub.off('VoteChanged');
   }
 }
