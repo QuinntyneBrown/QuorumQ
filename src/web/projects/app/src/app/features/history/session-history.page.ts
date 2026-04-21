@@ -3,6 +3,7 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { CardComponent, EmptyStateComponent } from '@components';
 import { environment } from '../../../environments/environment';
@@ -31,11 +32,19 @@ interface PagedHistory {
 @Component({
   selector: 'app-session-history-page',
   standalone: true,
-  imports: [RouterLink, DatePipe, MatButtonModule, MatPaginatorModule, CardComponent, EmptyStateComponent],
+  imports: [RouterLink, DatePipe, MatButtonModule, MatIconModule, MatPaginatorModule, CardComponent, EmptyStateComponent],
   template: `
     <div class="history-shell" data-testid="session-history">
       <header class="history-header">
-        <h1>Session History</h1>
+        <div class="header-row">
+          <h1>Session History</h1>
+          @if (isOwner()) {
+            <button mat-stroked-button (click)="exportCsv()" data-testid="export-csv-btn">
+              <mat-icon>download</mat-icon>
+              Export CSV
+            </button>
+          }
+        </div>
       </header>
 
       @if (history()?.items?.length) {
@@ -113,6 +122,7 @@ interface PagedHistory {
   styles: [`
     .history-shell { padding: 24px; max-width: 800px; margin: 0 auto; }
     .history-header { margin-bottom: 24px; }
+    .header-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
     h1 { font-size: 24px; font-weight: 700; margin: 0; }
     .history-list { list-style: none; padding: 0; margin: 0 0 16px; display: flex; flex-direction: column; gap: 12px; }
     .clickable-card { cursor: pointer; display: block; width: 100%; transition: box-shadow 0.15s; }
@@ -136,12 +146,14 @@ export class SessionHistoryPage implements OnInit {
   readonly teamId = signal('');
   readonly history = signal<PagedHistory | null>(null);
   readonly loaded = signal(false);
+  readonly isOwner = signal(false);
   page = 1;
   pageSize = 20;
 
   ngOnInit(): void {
     this.teamId.set(this.route.snapshot.paramMap.get('teamId') ?? '');
     this.load();
+    this.loadRole();
   }
 
   openSession(sessionId: string): void {
@@ -152,6 +164,28 @@ export class SessionHistoryPage implements OnInit {
     this.page = e.pageIndex + 1;
     this.pageSize = e.pageSize;
     this.load();
+  }
+
+  exportCsv(): void {
+    const url = `${environment.apiBaseUrl}/teams/${this.teamId()}/history/export.csv`;
+    this.http.get(url, { responseType: 'blob' }).subscribe({
+      next: blob => {
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `quorumq-history.csv`;
+        a.click();
+        URL.revokeObjectURL(a.href);
+      },
+    });
+  }
+
+  private loadRole(): void {
+    this.http
+      .get<{ callerRole: string }>(`${environment.apiBaseUrl}/teams/${this.teamId()}`)
+      .subscribe({
+        next: d => this.isOwner.set(d.callerRole === 'Owner'),
+        error: () => {},
+      });
   }
 
   private load(): void {

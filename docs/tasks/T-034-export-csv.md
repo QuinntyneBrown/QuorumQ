@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/09-screens-history.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/HistoryEndpoints.cs`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 

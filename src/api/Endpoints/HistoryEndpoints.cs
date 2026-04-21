@@ -40,6 +40,7 @@ public static class HistoryEndpoints
             .RequireAuthorization();
 
         teamGroup.MapGet("/history", GetHistory).RequireTeamMembership();
+        teamGroup.MapGet("/history/export.csv", ExportCsv).RequireTeamMembership(MembershipRole.Owner);
 
         var sessionGroup = app.MapGroup("/sessions")
             .WithTags("History")
@@ -169,5 +170,65 @@ public static class HistoryEndpoints
             session.Id, session.TeamId.ToString(), session.State.ToString(),
             session.StartedAt, session.DecidedAt, winner,
             suggestions, comments));
+    }
+
+    private static async Task<IResult> ExportCsv(
+        Guid teamId,
+        AppDbContext db)
+    {
+        var sessions = await db.LunchSessions
+            .AsNoTracking()
+            .Include(s => s.Suggestions).ThenInclude(sg => sg.Restaurant)
+            .Include(s => s.Votes)
+            .Where(s => s.TeamId == teamId &&
+                   (s.State == SessionState.Decided || s.State == SessionState.Cancelled))
+            .OrderByDescending(s => s.StartedAt)
+            .ToListAsync();
+
+        var stream = new MemoryStream();
+        await using var writer = new StreamWriter(stream, leaveOpen: true);
+
+        await writer.WriteLineAsync("date,winner,cuisine,tally,participants");
+
+        foreach (var s in sessions)
+        {
+            var winner = s.WinnerSuggestionId is not null
+                ? s.Suggestions.FirstOrDefault(sg => sg.Id == s.WinnerSuggestionId)?.Restaurant
+                : null;
+
+            var tally = s.Suggestions
+                .Where(sg => sg.WithdrawnAt == null)
+                .Select(sg => $"{sg.Restaurant.Name}:{s.Votes.Count(v => v.SuggestionId == sg.Id)}")
+                .ToList();
+
+            var participants = s.Votes.Select(v => v.UserId)
+                .Union(s.Suggestions.Select(sg => sg.SuggestedBy))
+                .Distinct()
+                .Count();
+
+            await writer.WriteLineAsync(string.Join(",", new[]
+            {
+                CsvEscape(s.StartedAt.ToString("yyyy-MM-dd")),
+                CsvEscape(winner?.Name ?? ""),
+                CsvEscape(winner?.Cuisine ?? ""),
+                CsvEscape(string.Join("; ", tally)),
+                CsvEscape(participants.ToString()),
+            }));
+        }
+
+        await writer.FlushAsync();
+        stream.Position = 0;
+
+        return Results.File(
+            stream,
+            contentType: "text/csv",
+            fileDownloadName: $"quorumq-history-{teamId:N}.csv");
+    }
+
+    private static string CsvEscape(string value)
+    {
+        if (value.Contains(',') || value.Contains('"') || value.Contains('\n'))
+            return $"\"{value.Replace("\"", "\"\"")}\"";
+        return value;
     }
 }
