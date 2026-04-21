@@ -10,6 +10,7 @@ public class User
     public DateTime? EmailVerifiedAt { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }
+    public string ThemePreference { get; set; } = "system";
 
     public ICollection<Membership> Memberships { get; set; } = [];
     public ICollection<Notification> Notifications { get; set; } = [];

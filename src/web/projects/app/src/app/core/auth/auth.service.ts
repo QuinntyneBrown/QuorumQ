@@ -3,12 +3,17 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
+export interface UserPreferences {
+  theme: 'system' | 'light' | 'dark';
+}
+
 export interface User {
   id: string;
   email: string;
   displayName: string;
   avatarUrl?: string | null;
   emailVerified: boolean;
+  preferences: UserPreferences;
 }
 
 interface SignUpRequest { email: string; password: string; displayName: string; }

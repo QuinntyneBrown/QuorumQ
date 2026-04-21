@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, Observable, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User } from './auth.service';
+import { ThemeService } from '../theme/theme.service';
 
 const LAST_TEAM_KEY = 'qq_last_team';
 
@@ -11,6 +12,7 @@ const LAST_TEAM_KEY = 'qq_last_team';
 export class SessionStore {
   private readonly http = inject(HttpClient);
   private readonly router = inject(Router);
+  private readonly themeService = inject(ThemeService);
 
   readonly user = signal<User | null | undefined>(undefined);
   readonly lastTeamId = signal<string | null>(localStorage.getItem(LAST_TEAM_KEY));
@@ -37,7 +39,10 @@ export class SessionStore {
     return this.http
       .get<User>(`${environment.apiBaseUrl}/auth/me`, { withCredentials: true })
       .pipe(
-        tap(u => this.user.set(u)),
+        tap(u => {
+          this.user.set(u);
+          this.themeService.init(u.preferences?.theme ?? 'system');
+        }),
         catchError(() => {
           this.user.set(null);
           return of(null);

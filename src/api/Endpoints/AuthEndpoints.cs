@@ -20,6 +20,7 @@ public static class AuthEndpoints
         group.MapPost("/sign-in", SignIn).RequireRateLimiting("auth-signin");
         group.MapPost("/sign-out", (Delegate)SignOut);
         group.MapGet("/me", Me).RequireAuthorization();
+        group.MapPut("/me/preferences", UpdatePreferences).RequireAuthorization();
         group.MapPost("/verify-email", VerifyEmail);
 
         return app;
@@ -28,7 +29,9 @@ public static class AuthEndpoints
     record SignUpRequest(string Email, string Password, string DisplayName);
     record SignInRequest(string Email, string Password);
     record VerifyEmailRequest(string Token);
-    record UserSummary(Guid Id, string Email, string DisplayName, string? AvatarUrl, bool EmailVerified);
+    record UpdatePreferencesRequest(string Theme);
+    record UserPreferences(string Theme);
+    record UserSummary(Guid Id, string Email, string DisplayName, string? AvatarUrl, bool EmailVerified, UserPreferences Preferences);
 
     static async Task<IResult> SignUp(
         SignUpRequest req,
@@ -77,7 +80,7 @@ public static class AuthEndpoints
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 
-        return Results.Created("/auth/me", new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue));
+        return Results.Created("/auth/me", new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue, new UserPreferences(user.ThemePreference)));
     }
 
     static async Task<IResult> SignIn(
@@ -101,7 +104,7 @@ public static class AuthEndpoints
         var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
         await ctx.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(identity));
 
-        return Results.Ok(new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue));
+        return Results.Ok(new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue, new UserPreferences(user.ThemePreference)));
     }
 
     static async Task<IResult> SignOut(HttpContext ctx)
@@ -119,7 +122,26 @@ public static class AuthEndpoints
         var user = await db.Users.FindAsync(userId);
         if (user == null) return Results.Unauthorized();
 
-        return Results.Ok(new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue));
+        return Results.Ok(new UserSummary(user.Id, user.Email, user.DisplayName, user.AvatarUrl, user.EmailVerifiedAt.HasValue, new UserPreferences(user.ThemePreference)));
+    }
+
+    static async Task<IResult> UpdatePreferences(UpdatePreferencesRequest req, HttpContext ctx, AppDbContext db)
+    {
+        var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+            return Results.Unauthorized();
+
+        var allowed = new[] { "system", "light", "dark" };
+        if (!allowed.Contains(req.Theme))
+            return Results.ValidationProblem(new Dictionary<string, string[]> { ["theme"] = ["Must be system, light, or dark."] });
+
+        var user = await db.Users.FindAsync(userId);
+        if (user == null) return Results.Unauthorized();
+
+        user.ThemePreference = req.Theme;
+        await db.SaveChangesAsync();
+
+        return Results.Ok(new UserPreferences(user.ThemePreference));
     }
 
     static async Task<IResult> VerifyEmail(
