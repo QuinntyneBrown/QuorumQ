@@ -8,7 +8,7 @@ export const settingsRoutes: Routes = [
       { path: '', redirectTo: 'account', pathMatch: 'full' },
       {
         path: 'account',
-        loadComponent: () => import('./account.page').then(m => m.AccountPage),
+        loadComponent: () => import('./delete-account.page').then(m => m.DeleteAccountPage),
       },
       {
         path: 'notifications',

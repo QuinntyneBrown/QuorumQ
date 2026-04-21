@@ -19,18 +19,45 @@ public sealed class SessionDeadlineWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(5));
-        while (!stoppingToken.IsCancellationRequested && await timer.WaitForNextTickAsync(stoppingToken))
+        using var sessionTimer = new PeriodicTimer(TimeSpan.FromSeconds(5));
+        using var cleanupTimer = new PeriodicTimer(TimeSpan.FromHours(24));
+
+        var sessionTask = RunTimer(sessionTimer, TransitionExpiredSessionsAsync, stoppingToken);
+        var cleanupTask = RunTimer(cleanupTimer, HardDeleteExpiredUsersAsync, stoppingToken);
+
+        await Task.WhenAll(sessionTask, cleanupTask);
+    }
+
+    private async Task RunTimer(
+        PeriodicTimer timer,
+        Func<CancellationToken, Task> action,
+        CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested && await timer.WaitForNextTickAsync(ct))
         {
-            try
-            {
-                await TransitionExpiredSessionsAsync(stoppingToken);
-            }
+            try { await action(ct); }
             catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                _logger.LogError(ex, "Error transitioning expired sessions");
+                _logger.LogError(ex, "Worker error in {Action}", action.Method.Name);
             }
         }
+    }
+
+    private async Task HardDeleteExpiredUsersAsync(CancellationToken ct)
+    {
+        await using var scope = _scopeFactory.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+        var cutoff = DateTime.UtcNow.AddDays(-30);
+        var toDelete = await db.Users
+            .IgnoreQueryFilters()
+            .Where(u => u.DeletedAt != null && u.DeletedAt <= cutoff)
+            .ToListAsync(ct);
+
+        if (toDelete.Count == 0) return;
+
+        db.Users.RemoveRange(toDelete);
+        await db.SaveChangesAsync(ct);
     }
 
     private async Task TransitionExpiredSessionsAsync(CancellationToken ct)

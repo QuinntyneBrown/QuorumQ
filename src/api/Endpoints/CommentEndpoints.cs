@@ -104,7 +104,9 @@ public static class CommentEndpoints
             .Select(c => new CommentDto(
                 c.Id, c.SuggestionId,
                 c.DeletedAt != null ? "" : c.Body,
-                new AuthorSummary(c.User.Id, c.User.DisplayName, c.User.AvatarUrl),
+                c.User != null
+                    ? new AuthorSummary(c.User.Id, c.User.DisplayName, c.User.AvatarUrl)
+                    : new AuthorSummary(c.UserId, "Former Member", null),
                 c.CreatedAt, c.EditedAt, c.DeletedAt != null))
             .ToListAsync();
 

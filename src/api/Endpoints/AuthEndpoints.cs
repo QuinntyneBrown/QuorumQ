@@ -21,6 +21,7 @@ public static class AuthEndpoints
         group.MapPost("/sign-out", (Delegate)SignOut);
         group.MapGet("/me", Me).RequireAuthorization();
         group.MapPut("/me/preferences", UpdatePreferences).RequireAuthorization();
+        group.MapDelete("/me", DeleteAccount).RequireAuthorization();
         group.MapPost("/verify-email", VerifyEmail);
 
         return app;
@@ -142,6 +143,26 @@ public static class AuthEndpoints
         await db.SaveChangesAsync();
 
         return Results.Ok(new UserPreferences(user.ThemePreference));
+    }
+
+    static async Task<IResult> DeleteAccount(HttpContext ctx, AppDbContext db)
+    {
+        var userIdClaim = ctx.User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim, out var userId))
+            return Results.Unauthorized();
+
+        var user = await db.Users.FindAsync(userId);
+        if (user == null) return Results.Unauthorized();
+
+        user.DeletedAt = DateTime.UtcNow;
+        user.Email = $"deleted-{userId}@deleted.qquser";
+        user.DisplayName = "Former Member";
+        user.AvatarUrl = null;
+        user.PasswordHash = "";
+
+        await db.SaveChangesAsync();
+        await ctx.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        return Results.NoContent();
     }
 
     static async Task<IResult> VerifyEmail(
