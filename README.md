@@ -131,6 +131,8 @@ For the detailed structure and layout rules, see [docs/folder-structure.md](docs
 
 ## Documentation
 
+- [docs/index.md](docs/index.md): docs entry point
+- [docs/user-guide/index.md](docs/user-guide/index.md): end-user guide
 - [docs/specs/L1.md](docs/specs/L1.md): high-level product requirements
 - [docs/specs/L2.md](docs/specs/L2.md): detailed requirements and acceptance criteria
 - [docs/folder-structure.md](docs/folder-structure.md): repository architecture and conventions
