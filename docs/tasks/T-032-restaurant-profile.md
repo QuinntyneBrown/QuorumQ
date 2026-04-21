@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/08-screens-restaurant.md`, `docs/designs/12-errors-empty-states.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/history/restaurant-profile.page.ts`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 

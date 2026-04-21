@@ -35,3 +35,7 @@ Thumbs.db
 src/api/*.db
 src/api/*.db-shm
 src/api/*.db-wal
+
+# playwright-cli session snapshots
+.playwright-cli/
+src/web/signin-page.yaml

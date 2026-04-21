@@ -1,5 +1,6 @@
 import { Component, inject, Input, OnInit, OnDestroy, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { RouterLink } from '@angular/router';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -21,7 +22,7 @@ interface VoteTally {
 @Component({
   selector: 'app-suggestion-list',
   standalone: true,
-  imports: [MatChipsModule, MatButtonModule, MatIconModule, AvatarComponent, CardComponent, VoteButtonComponent, CommentThreadComponent],
+  imports: [RouterLink, MatChipsModule, MatButtonModule, MatIconModule, AvatarComponent, CardComponent, VoteButtonComponent, CommentThreadComponent],
   template: `
     @if (suggestions().length === 0) {
       <p class="empty" data-testid="no-suggestions">No suggestions yet. Be the first!</p>
@@ -32,7 +33,10 @@ interface VoteTally {
             <qq-card appearance="outlined">
               <div class="card-body">
                 <div class="restaurant-header">
-                  <span class="restaurant-name" data-testid="restaurant-name">{{ s.restaurantName }}</span>
+                  <a class="restaurant-name" data-testid="restaurant-name"
+                    [routerLink]="teamId ? ['/teams', teamId, 'restaurants', s.restaurantId] : null">
+                    {{ s.restaurantName }}
+                  </a>
                   @if (s.cuisine) {
                     <mat-chip-set>
                       <mat-chip>{{ s.cuisine }}</mat-chip>
@@ -101,7 +105,8 @@ interface VoteTally {
     .suggestion-item { display: block; }
     .card-body { padding: 12px 16px; }
     .restaurant-header { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
-    .restaurant-name { font-weight: 600; font-size: 16px; }
+    .restaurant-name { font-weight: 600; font-size: 16px; color: inherit; text-decoration: none; }
+    .restaurant-name:hover { text-decoration: underline; color: var(--mat-sys-primary); }
     .vote-btn-wrapper { margin-left: auto; }
     .withdraw-btn { color: var(--mat-sys-error); }
     .address { font-size: 13px; color: var(--mat-sys-on-surface-variant); margin: 4px 0; }
@@ -113,6 +118,7 @@ interface VoteTally {
 })
 export class SuggestionListComponent implements OnInit, OnDestroy {
   @Input({ required: true }) sessionId!: string;
+  @Input() teamId = '';
   @Input() sessionState = '';
   @Input() tiedSuggestionIds: string[] = [];
 

@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using QuorumQ.Api.Auth;
 using QuorumQ.Api.Data;
 using QuorumQ.Api.Models;
 
@@ -14,6 +15,9 @@ public static class ReviewEndpoints
         DateTime CreatedAt, DateTime? UpdatedAt);
     private record MyReviewState(bool Participated, ReviewDto? Review);
     private record RestaurantReviewsDto(double? AverageRating, IReadOnlyList<ReviewDto> Reviews);
+    private record RestaurantDetail(
+        Guid Id, string Name, string? Cuisine, string? Address, string? WebsiteUrl,
+        double? AverageRating, int ReviewCount, IReadOnlyList<ReviewDto> Reviews);
 
     public static IEndpointRouteBuilder MapReviewEndpoints(this IEndpointRouteBuilder app)
     {
@@ -29,6 +33,13 @@ public static class ReviewEndpoints
             .RequireAuthorization();
 
         restaurantGroup.MapGet("/{restaurantId:guid}/reviews", ListReviews);
+
+        var teamRestaurantGroup = app.MapGroup("/teams/{teamId:guid}/restaurants")
+            .WithTags("Reviews")
+            .RequireAuthorization();
+
+        teamRestaurantGroup.MapGet("/{restaurantId:guid}", GetRestaurantProfile)
+            .RequireTeamMembership();
 
         return app;
     }
@@ -171,6 +182,47 @@ public static class ReviewEndpoints
         }).ToList();
 
         return Results.Ok(new RestaurantReviewsDto(restaurant.AverageRating, dtos));
+    }
+
+    private static async Task<IResult> GetRestaurantProfile(
+        Guid teamId,
+        Guid restaurantId,
+        AppDbContext db)
+    {
+        var restaurant = await db.Restaurants.AsNoTracking()
+            .Where(r => r.Id == restaurantId && r.TeamId == teamId)
+            .Select(r => new { r.Id, r.Name, r.Cuisine, r.Address, r.WebsiteUrl, r.AverageRating })
+            .FirstOrDefaultAsync();
+        if (restaurant is null) return Results.NotFound();
+
+        var rawReviews = await db.Reviews
+            .AsNoTracking()
+            .Where(r => r.RestaurantId == restaurantId)
+            .OrderByDescending(r => r.CreatedAt)
+            .Select(r => new { r.Id, r.Rating, r.Body, r.CreatedAt, r.UpdatedAt, r.UserId })
+            .ToListAsync();
+
+        var userIds = rawReviews.Select(r => r.UserId).Distinct().ToList();
+        var users = await db.Users
+            .AsNoTracking()
+            .IgnoreQueryFilters()
+            .Where(u => userIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.DisplayName, u.AvatarUrl, u.DeletedAt })
+            .ToDictionaryAsync(u => u.Id);
+
+        var reviews = rawReviews.Select(r =>
+        {
+            users.TryGetValue(r.UserId, out var user);
+            var author = user is null || user.DeletedAt is not null
+                ? new ReviewAuthor(Guid.Empty, "[deleted user]", null)
+                : new ReviewAuthor(user.Id, user.DisplayName, user.AvatarUrl);
+            return new ReviewDto(r.Id, r.Rating, r.Body, author, r.CreatedAt, r.UpdatedAt);
+        }).ToList();
+
+        return Results.Ok(new RestaurantDetail(
+            restaurant.Id, restaurant.Name, restaurant.Cuisine,
+            restaurant.Address, restaurant.WebsiteUrl,
+            restaurant.AverageRating, reviews.Count, reviews));
     }
 
     private static async Task<bool> CheckParticipation(AppDbContext db, Guid sessionId, Guid userId) =>

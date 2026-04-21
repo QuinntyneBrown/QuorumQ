@@ -20,6 +20,12 @@ export const routes: Routes = [
       import('./features/sessions/sessions.routes').then(m => m.sessionsRoutes),
   },
   {
+    path: 'teams/:teamId/restaurants/:restaurantId',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/history/restaurant-profile.page').then(m => m.RestaurantProfilePage),
+  },
+  {
     path: 'teams',
     canActivate: [authGuard],
     loadChildren: () =>

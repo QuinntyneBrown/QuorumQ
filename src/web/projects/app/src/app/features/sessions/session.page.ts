@@ -108,6 +108,7 @@ interface SessionDetail {
               <div class="suggestions-gap"></div>
               <app-suggestion-list
                 [sessionId]="session()!.id"
+                [teamId]="session()!.teamId"
                 [sessionState]="session()!.state"
                 [tiedSuggestionIds]="tiedSuggestionIds()"
               />

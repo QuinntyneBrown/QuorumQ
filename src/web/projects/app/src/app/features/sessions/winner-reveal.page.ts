@@ -17,6 +17,7 @@ interface SessionWinner {
   winnerCuisine?: string;
   winnerWebsiteUrl?: string;
   winnerDirectionsUrl?: string;
+  winnerRestaurantId?: string;
   teamId: string;
 }
 
@@ -75,6 +76,15 @@ interface SessionWinner {
             [sessionId]="sessionId()"
             data-testid="review-form-wrapper"
           />
+          @if (session()!.winnerRestaurantId) {
+            <a
+              mat-stroked-button
+              [routerLink]="['/teams', session()!.teamId, 'restaurants', session()!.winnerRestaurantId]"
+              data-testid="restaurant-name-link"
+            >
+              View restaurant profile
+            </a>
+          }
           <a
             mat-stroked-button
             [routerLink]="['/teams', session()!.teamId, 'sessions', sessionId()]"

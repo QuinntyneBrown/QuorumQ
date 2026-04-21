@@ -21,4 +21,14 @@ export class RestaurantProfilePage {
     await expect(this.page.getByTestId('average-rating')).toBeVisible();
     await expect(this.page.getByTestId('average-rating')).toContainText(`${stars}`);
   }
+
+  async expectReviewCount(n: number): Promise<void> {
+    await expect(this.page.getByTestId('review-count')).toBeVisible();
+    await expect(this.page.getByTestId('review-count')).toContainText(`${n}`);
+  }
+
+  async expectEmptyState(): Promise<void> {
+    await expect(this.page.getByTestId('empty-state')).toBeVisible();
+    await expect(this.page.getByTestId('suggest-cta')).toBeVisible();
+  }
 }

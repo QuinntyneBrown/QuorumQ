@@ -20,7 +20,7 @@ public static class SessionEndpoints
         Guid StartedBy, int SuggestionCount, string? WinnerName,
         bool WinnerChosenAtRandom = false, TieBreakInfo? TieBreak = null,
         string? WinnerCuisine = null, string? WinnerWebsiteUrl = null,
-        string? WinnerDirectionsUrl = null);
+        string? WinnerDirectionsUrl = null, Guid? WinnerRestaurantId = null);
 
     public static IEndpointRouteBuilder MapSessionEndpoints(this IEndpointRouteBuilder app)
     {
@@ -64,7 +64,7 @@ public static class SessionEndpoints
                    (s.State == SessionState.Suggesting || s.State == SessionState.Voting))
             .Select(s => new SessionDetail(
                 s.Id, s.TeamId.ToString(), s.State.ToString(), s.Deadline, s.StartedAt,
-                s.StartedBy, s.Suggestions.Count(), null, false, null, null, null, null))
+                s.StartedBy, s.Suggestions.Count(), null, false, null, null, null, null, null))
             .FirstOrDefaultAsync();
 
         if (existing is not null)
@@ -123,7 +123,8 @@ public static class SessionEndpoints
         var dto = new SessionDetail(raw.Id, raw.TeamId.ToString(), raw.State.ToString(),
             raw.Deadline, raw.StartedAt, raw.StartedBy, suggestionCount, winnerName,
             raw.WinnerChosenAtRandom, tieBreak,
-            winnerRestaurant?.Cuisine, winnerRestaurant?.WebsiteUrl, winnerDirectionsUrl);
+            winnerRestaurant?.Cuisine, winnerRestaurant?.WebsiteUrl, winnerDirectionsUrl,
+            winnerRestaurant?.Id);
 
         return Results.Ok(dto);
     }
