@@ -7,7 +7,7 @@
 **Primary area:** e2e + small UI fixes
 **Design refs:** all of `docs/designs/01…16`
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/design-system/L2-24...`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
