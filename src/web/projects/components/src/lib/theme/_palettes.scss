@@ -36,7 +36,20 @@ $qq-tertiary-palette: (
   )
 );
 
+// ── Error / Warn: Material 3 Error palette (design doc §1 Error) ─────────────
+// Error 40 (#B3261E) passes WCAG AA (6.3:1 against white).
+$qq-error-palette: (
+  50:  #F9DEDC, 100: #F9DEDC, 200: #F2B8B5, 300: #E46962, 400: #C7463D,
+  500: #B3261E, 600: #8C1D18, 700: #601410, 800: #410E0B, 900: #410E0B,
+  A100: #F9DEDC, A200: #F2B8B5, A400: #C7463D, A700: #601410,
+  contrast: (
+    50: #410E0B, 100: #410E0B, 200: #410E0B, 300: #FFFFFF, 400: #FFFFFF,
+    500: #FFFFFF, 600: #FFFFFF, 700: #FFFFFF, 800: #FFFFFF, 900: #FFFFFF,
+    A100: #410E0B, A200: #410E0B, A400: #FFFFFF, A700: #FFFFFF,
+  )
+);
+
 // ── Material palette objects ──────────────────────────────────────────────────
-$qq-primary:   mat.m2-define-palette($qq-primary-palette, 500, 100, 700);
+$qq-primary:   mat.m2-define-palette($qq-primary-palette, 600, 100, 700);
 $qq-secondary: mat.m2-define-palette($qq-secondary-palette, 500, 100, 700);
-$qq-warn:      mat.m2-define-palette(mat.$m2-red-palette);
+$qq-warn:      mat.m2-define-palette($qq-error-palette, 500, 100, 700);
