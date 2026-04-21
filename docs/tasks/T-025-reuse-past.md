@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/suggestions/restaurant-autocomplete.component.ts`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -48,9 +48,9 @@ previously suggested by the team. Matches appear within 300 ms of typing ≥
 
 ## Definition of Done
 
-- [ ] Failing spec first; passes on all browsers.
-- [ ] 95th-percentile response time for the autocomplete endpoint ≤
+- [x] Failing spec first; passes on all browsers.
+- [x] 95th-percentile response time for the autocomplete endpoint ≤
       200 ms against the seeded dev DB.
-- [ ] Autocomplete options focusable and selectable via keyboard only.
-- [ ] Results scoped strictly to the user's team (verify with a
+- [x] Autocomplete options focusable and selectable via keyboard only.
+- [x] Results scoped strictly to the user's team (verify with a
       negative test that restaurants from another team never appear).

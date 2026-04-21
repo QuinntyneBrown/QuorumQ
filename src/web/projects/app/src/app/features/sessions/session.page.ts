@@ -86,6 +86,7 @@ interface SessionDetail {
             @if (session()) {
               <app-suggest-restaurant
                 [sessionId]="session()!.id"
+                [teamId]="session()!.teamId"
                 [disabled]="isSuggestingDisabled()"
               />
               <div class="suggestions-gap"></div>
@@ -155,7 +156,7 @@ export class SessionPage implements OnInit, OnDestroy {
 
   readonly isCancelled = computed(() => this.session()?.state === 'Cancelled');
 
-  readonly isSuggestingDisabled: Signal<boolean> = computed(() => this.session()?.state !== 'Suggesting');
+  readonly isSuggestingDisabled = computed(() => this.session()?.state !== 'Suggesting');
 
   ngOnInit(): void {
     const sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';

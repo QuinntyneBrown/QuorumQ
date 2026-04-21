@@ -2,6 +2,7 @@ using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using QuorumQ.Api.Auth;
 using QuorumQ.Api.Data;
 using QuorumQ.Api.Hubs;
 using QuorumQ.Api.Models;
@@ -19,6 +20,8 @@ public static class SuggestionEndpoints
 
     private record DuplicatePayload(SuggestionDto ExistingSuggestion, string SuggestedBy);
 
+    private record RestaurantSearchResult(Guid Id, string Name, string? Cuisine, string? Address, string? WebsiteUrl);
+
     public static IEndpointRouteBuilder MapSuggestionEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/sessions/{sessionId:guid}/suggestions")
@@ -27,6 +30,12 @@ public static class SuggestionEndpoints
 
         group.MapPost("/", AddSuggestion);
         group.MapGet("/", GetSuggestions);
+
+        var teamGroup = app.MapGroup("/teams/{teamId:guid}/restaurants")
+            .WithTags("Suggestions")
+            .RequireAuthorization();
+
+        teamGroup.MapGet("/", SearchRestaurants).RequireTeamMembership();
 
         return app;
     }
@@ -154,6 +163,31 @@ public static class SuggestionEndpoints
         new(s.Id, s.SessionId, s.RestaurantId,
             r.Name, r.Cuisine, r.Address, r.WebsiteUrl,
             s.SuggestedBy, suggestedByName, s.CreatedAt, voteCount);
+
+    private static async Task<IResult> SearchRestaurants(
+        Guid teamId,
+        string? query,
+        AppDbContext db,
+        int limit = 10)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Trim().Length < 2)
+            return Results.Ok(Array.Empty<RestaurantSearchResult>());
+
+        limit = Math.Clamp(limit, 1, 10);
+        var q = query.Trim().ToLower();
+
+        var results = await db.Restaurants
+            .AsNoTracking()
+            .Where(r => r.TeamId == teamId && r.Name.ToLower().Contains(q))
+            .OrderByDescending(r => db.Suggestions
+                .Where(s => s.RestaurantId == r.Id)
+                .Max(s => (DateTime?)s.CreatedAt))
+            .Take(limit)
+            .Select(r => new RestaurantSearchResult(r.Id, r.Name, r.Cuisine, r.Address, r.WebsiteUrl))
+            .ToListAsync();
+
+        return Results.Ok(results);
+    }
 
     private static string Normalize(string name) =>
         Regex.Replace(name.Trim().ToLower(), @"[^\w\s]", "").Trim();

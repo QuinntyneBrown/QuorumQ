@@ -1,10 +1,11 @@
-import { Component, inject, Input, output, signal } from '@angular/core';
+import { Component, inject, Input, output, signal, ViewChild } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { RestaurantAutocompleteComponent, RestaurantOption } from './restaurant-autocomplete.component';
 import { environment } from '../../../environments/environment';
 
 export interface SuggestionDto {
@@ -24,7 +25,7 @@ export interface SuggestionDto {
 @Component({
   selector: 'app-suggest-restaurant',
   standalone: true,
-  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatExpansionModule],
+  imports: [ReactiveFormsModule, MatButtonModule, MatFormFieldModule, MatInputModule, MatExpansionModule, RestaurantAutocompleteComponent],
   template: `
     <mat-expansion-panel data-testid="suggest-panel" [expanded]="disabled ? false : undefined">
       <mat-expansion-panel-header>
@@ -45,16 +46,12 @@ export interface SuggestionDto {
               </button>
             </div>
           }
-          <mat-form-field appearance="outline" class="full-width">
-            <mat-label>Restaurant name</mat-label>
-            <input matInput formControlName="name" data-testid="name-input" autocomplete="off" />
-            @if (form.controls.name.hasError('required') && form.controls.name.touched) {
-              <mat-error>Name is required</mat-error>
-            }
-            @if (form.controls.name.hasError('minlength') && form.controls.name.touched) {
-              <mat-error>Name must be at least 2 characters</mat-error>
-            }
-          </mat-form-field>
+          <app-restaurant-autocomplete
+            #autocomplete
+            [teamId]="teamId"
+            (selected)="onRestaurantSelected($event)"
+            (nameChanged)="onNameChanged($event)"
+          />
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Cuisine (optional)</mat-label>
             <input matInput formControlName="cuisine" data-testid="cuisine-input" />
@@ -73,7 +70,7 @@ export interface SuggestionDto {
               color="primary"
               type="submit"
               data-testid="submit-suggestion-btn"
-              [disabled]="form.invalid || submitting()"
+              [disabled]="nameValue().length < 2 || submitting()"
             >
               Suggest
             </button>
@@ -98,7 +95,10 @@ export interface SuggestionDto {
 })
 export class SuggestRestaurantComponent {
   @Input({ required: true }) sessionId!: string;
+  @Input({ required: true }) teamId!: string;
   @Input() disabled = false;
+
+  @ViewChild('autocomplete') autocompleteRef!: RestaurantAutocompleteComponent;
 
   readonly suggested = output<SuggestionDto>();
 
@@ -107,20 +107,36 @@ export class SuggestRestaurantComponent {
 
   readonly submitting = signal(false);
   readonly duplicateMsg = signal<string | null>(null);
+  readonly nameValue = signal('');
 
   readonly form = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(80)]],
     cuisine: [''],
     address: [''],
     websiteUrl: [''],
   });
 
+  onNameChanged(name: string): void {
+    this.nameValue.set(name);
+    this.duplicateMsg.set(null);
+  }
+
+  onRestaurantSelected(option: RestaurantOption | null): void {
+    if (!option) return;
+    this.nameValue.set(option.name);
+    this.form.patchValue({
+      cuisine: option.cuisine ?? '',
+      address: option.address ?? '',
+      websiteUrl: option.websiteUrl ?? '',
+    });
+  }
+
   submit(): void {
-    if (this.form.invalid) return;
+    const name = this.autocompleteRef?.getValue() ?? this.nameValue();
+    if (name.trim().length < 2) return;
     this.submitting.set(true);
     this.duplicateMsg.set(null);
 
-    const { name, cuisine, address, websiteUrl } = this.form.value;
+    const { cuisine, address, websiteUrl } = this.form.value;
     this.http
       .post<SuggestionDto>(`${environment.apiBaseUrl}/sessions/${this.sessionId}/suggestions`, {
         name, cuisine, address, websiteUrl,
@@ -129,6 +145,8 @@ export class SuggestRestaurantComponent {
         next: dto => {
           this.suggested.emit(dto);
           this.form.reset();
+          this.nameValue.set('');
+          this.autocompleteRef?.nameControl.reset();
           this.submitting.set(false);
         },
         error: err => {

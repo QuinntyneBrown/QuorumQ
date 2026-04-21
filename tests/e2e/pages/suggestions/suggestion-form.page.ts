@@ -27,4 +27,19 @@ export class SuggestionFormPage {
   async expectFormDisabled(): Promise<void> {
     await expect(this.page.getByTestId('form-disabled-msg')).toBeVisible();
   }
+
+  async typeNameQuery(q: string): Promise<void> {
+    await this.page.getByTestId('suggest-panel').click();
+    await this.page.getByTestId('name-input').fill(q);
+  }
+
+  async expectAutocompleteOptions(names: string[]): Promise<void> {
+    for (const name of names) {
+      await expect(this.page.locator('mat-option').filter({ hasText: name })).toBeVisible();
+    }
+  }
+
+  async selectAutocomplete(name: string): Promise<void> {
+    await this.page.locator('mat-option').filter({ hasText: name }).click();
+  }
 }
