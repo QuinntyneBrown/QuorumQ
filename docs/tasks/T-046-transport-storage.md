@@ -5,7 +5,7 @@
 **Primary area:** backend + e2e
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/security/L2-42...`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
