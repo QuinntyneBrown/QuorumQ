@@ -5,7 +5,7 @@
 **Primary area:** frontend + e2e
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/performance/L2-29...`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
