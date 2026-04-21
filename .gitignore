@@ -39,3 +39,4 @@ src/api/*.db-wal
 # playwright-cli session snapshots
 .playwright-cli/
 src/web/signin-page.yaml
+src/api/quorumq-dev.db
