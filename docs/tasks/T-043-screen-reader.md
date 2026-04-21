@@ -5,7 +5,7 @@
 **Primary area:** frontend + e2e
 **Design refs:** `docs/designs/15-accessibility.md`, `docs/designs/13-notifications.md`
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/a11y/L2-28...`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
