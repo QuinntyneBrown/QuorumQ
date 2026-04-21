@@ -5,7 +5,7 @@
 **Primary area:** e2e + small UI fixes discovered in audit
 **Design refs:** `docs/designs/15-accessibility.md`, `docs/designs/03-components.md`
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/responsive/L2-23...`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
