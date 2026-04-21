@@ -5,7 +5,7 @@
 **Primary area:** frontend + e2e
 **Design refs:** `docs/designs/14-motion.md`
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/design-system/L2-25...`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
