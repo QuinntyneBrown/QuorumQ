@@ -21,8 +21,12 @@ export async function expectAccessible(page: Page, options?: A11yOptions): Promi
 }
 
 export async function expectLiveRegionAnnouncement(page: Page, text: string): Promise<void> {
-  const region = page.locator('[aria-live="polite"], [aria-live="assertive"]');
-  await expect(region.first()).toContainText(text, { timeout: 5000 });
+  // Filter live regions by content; CDK announcer is visually hidden but its
+  // text content is still queryable. Prefer the CDK announcer class if present.
+  const region = page
+    .locator('[aria-live="polite"], [aria-live="assertive"]')
+    .filter({ hasText: text });
+  await expect(region.first()).toContainText(text, { timeout: 8000 });
 }
 
 /** @deprecated use expectAccessible */

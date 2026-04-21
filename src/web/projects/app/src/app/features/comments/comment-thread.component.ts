@@ -8,6 +8,7 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { AvatarComponent } from '@components';
 import { SessionHubClient } from '../../core/realtime/session-hub.client';
 import { SessionStore } from '../../core/auth/session.store';
+import { QqLiveAnnouncer } from '../../core/a11y/live-announcer';
 import { environment } from '../../../environments/environment';
 
 export interface CommentAuthor {
@@ -141,6 +142,8 @@ export class CommentThreadComponent implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly hub = inject(SessionHubClient);
   private readonly sessionStore = inject(SessionStore);
+  private readonly announcer = inject(QqLiveAnnouncer);
+  private lastCommentAnnounceMs = 0;
 
   readonly comments = signal<CommentDto[]>([]);
   readonly editingId = signal<string | null>(null);
@@ -213,6 +216,12 @@ export class CommentThreadComponent implements OnInit, OnDestroy {
     this.hub.on<CommentDto>('CommentAdded', dto => {
       if (dto.suggestionId !== this.suggestionId) return;
       this.comments.update(list => [...list, dto]);
+      // Throttle polite announcements: max 1 per 2 seconds.
+      const now = Date.now();
+      if (now - this.lastCommentAnnounceMs >= 2000) {
+        this.lastCommentAnnounceMs = now;
+        this.announcer.polite(`New comment from ${dto.author.displayName}.`);
+      }
     });
     this.hub.on<CommentDto>('CommentEdited', dto => {
       if (dto.suggestionId !== this.suggestionId) return;

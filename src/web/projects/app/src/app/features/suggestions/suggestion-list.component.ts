@@ -8,6 +8,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { AvatarComponent, CardComponent, ConfirmDialogComponent } from '@components';
 import { SessionHubClient } from '../../core/realtime/session-hub.client';
 import { SessionStore } from '../../core/auth/session.store';
+import { QqLiveAnnouncer } from '../../core/a11y/live-announcer';
 import { VoteButtonComponent } from '../voting/vote-button.component';
 import { CommentThreadComponent } from '../comments/comment-thread.component';
 import { environment } from '../../../environments/environment';
@@ -126,6 +127,7 @@ export class SuggestionListComponent implements OnInit, OnDestroy {
   private readonly hub = inject(SessionHubClient);
   private readonly dialog = inject(MatDialog);
   private readonly sessionStore = inject(SessionStore);
+  private readonly announcer = inject(QqLiveAnnouncer);
 
   readonly suggestions = signal<SuggestionDto[]>([]);
   readonly expandedThreads = signal<Set<string>>(new Set());
@@ -173,10 +175,18 @@ export class SuggestionListComponent implements OnInit, OnDestroy {
   }
 
   castVote(suggestionId: string): void {
+    const restaurant = this.suggestions().find(s => s.id === suggestionId)?.restaurantName ?? '';
     this.http
       .put<{ tallies: VoteTally[] }>(`${environment.apiBaseUrl}/sessions/${this.sessionId}/votes`, { suggestionId })
       .subscribe({
-        next: res => this.applyTallies(res.tallies),
+        next: res => {
+          this.applyTallies(res.tallies);
+          const tally = res.tallies.find(t => t.suggestionId === suggestionId);
+          if (tally) {
+            const action = tally.youVoted ? `You voted for ${restaurant}.` : `You removed your vote for ${restaurant}.`;
+            this.announcer.polite(`${action} Current tally: ${tally.count}.`);
+          }
+        },
         error: () => {},
       });
   }

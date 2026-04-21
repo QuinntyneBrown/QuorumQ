@@ -5,7 +5,7 @@
 **Primary area:** frontend + e2e
 **Design refs:** `docs/designs/15-accessibility.md`, `docs/designs/13-notifications.md`
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/a11y/L2-28...`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -44,9 +44,9 @@ routine updates; assertive for winner announcement.
 
 ## Definition of Done
 
-- [ ] Failing spec first; passes on all browsers.
-- [ ] Only one assertive announcement per decided transition.
-- [ ] Polite announcements throttled (no flooding on high-activity
+- [x] Failing spec first; passes on all browsers.
+- [x] Only one assertive announcement per decided transition.
+- [x] Polite announcements throttled (no flooding on high-activity
       sessions).
-- [ ] Zero redundant announcements (e.g., toast + live region for the
+- [x] Zero redundant announcements (e.g., toast + live region for the
       same thing uses T-009's single mirrored call).
