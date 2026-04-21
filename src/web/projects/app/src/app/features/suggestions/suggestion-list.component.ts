@@ -175,7 +175,20 @@ export class SuggestionListComponent implements OnInit, OnDestroy {
   }
 
   castVote(suggestionId: string): void {
-    const restaurant = this.suggestions().find(s => s.id === suggestionId)?.restaurantName ?? '';
+    const current = this.suggestions().find(s => s.id === suggestionId);
+    if (!current) return;
+    const restaurant = current.restaurantName;
+    const optimisticVoted = !current.youVoted;
+
+    // Optimistic update — immediate visual feedback before API round-trip.
+    this.suggestions.update(list =>
+      list.map(s =>
+        s.id === suggestionId
+          ? { ...s, youVoted: optimisticVoted, voteCount: optimisticVoted ? s.voteCount + 1 : s.voteCount - 1 }
+          : s,
+      ),
+    );
+
     this.http
       .put<{ tallies: VoteTally[] }>(`${environment.apiBaseUrl}/sessions/${this.sessionId}/votes`, { suggestionId })
       .subscribe({
@@ -187,7 +200,16 @@ export class SuggestionListComponent implements OnInit, OnDestroy {
             this.announcer.polite(`${action} Current tally: ${tally.count}.`);
           }
         },
-        error: () => {},
+        error: () => {
+          // Revert optimistic update on failure.
+          this.suggestions.update(list =>
+            list.map(s =>
+              s.id === suggestionId
+                ? { ...s, youVoted: current.youVoted, voteCount: current.voteCount }
+                : s,
+            ),
+          );
+        },
       });
   }
 

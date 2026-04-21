@@ -5,7 +5,7 @@
 **Primary area:** frontend + e2e
 **Design refs:** —
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/performance/L2-30...`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -43,8 +43,8 @@ interaction blocks the main thread > 50 ms (INP budget).
 
 ## Definition of Done
 
-- [ ] Spec passes against a production build on the throttled mobile
+- [x] Spec passes against a production build on the throttled mobile
       project.
-- [ ] No action blocks the main thread beyond budget.
-- [ ] Feedback spinner / micro-interaction visible within 100 ms on every
+- [x] No action blocks the main thread beyond budget.
+- [x] Feedback spinner / micro-interaction visible within 100 ms on every
       primary action.
