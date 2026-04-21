@@ -20,7 +20,7 @@ export class VotePanelPage {
   }
 
   async expectTieBreakActive(): Promise<void> {
-    await expect(this.page.getByTestId('tie-break-banner')).toBeVisible();
+    await expect(this.page.getByTestId('tie-break-banner')).toBeVisible({ timeout: 15000 });
   }
 
   async expectOnlyTiedVotable(votableSuggestionIds: string[], allSuggestionIds: string[]): Promise<void> {

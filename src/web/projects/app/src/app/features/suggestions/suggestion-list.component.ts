@@ -38,7 +38,7 @@ interface VoteTally {
                       <mat-chip>{{ s.cuisine }}</mat-chip>
                     </mat-chip-set>
                   }
-                  @if (sessionState === 'Voting') {
+                  @if (sessionState === 'Voting' && isVotable(s.id)) {
                     <app-vote-button
                       class="vote-btn-wrapper"
                       [suggestionId]="s.id"
@@ -135,6 +135,10 @@ export class SuggestionListComponent implements OnInit, OnDestroy {
 
   isThreadOpen(suggestionId: string): boolean {
     return this.expandedThreads().has(suggestionId);
+  }
+
+  isVotable(suggestionId: string): boolean {
+    return this.tiedSuggestionIds.length === 0 || this.tiedSuggestionIds.includes(suggestionId);
   }
 
   canWithdraw(s: SuggestionDto): boolean {

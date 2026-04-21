@@ -58,8 +58,8 @@ Primary actions "Get directions" and "Open website" are on the reveal.
 
 ## Definition of Done
 
-- [ ] Failing spec first; passes on all browsers.
-- [ ] Reveal appears within 2 s across two contexts.
-- [ ] Reveal honours `prefers-reduced-motion` (T-041 regression guard).
-- [ ] Screen-reader assertive announcement fires on reveal (L2-28).
-- [ ] "Get directions" uses a generic maps URL (no 3rd-party SDK).
+- [x] Failing spec first; passes on all browsers.
+- [x] Reveal appears within 2 s across two contexts.
+- [x] Reveal honours `prefers-reduced-motion` (T-041 regression guard).
+- [x] Screen-reader assertive announcement fires on reveal (L2-28).
+- [x] "Get directions" uses a generic maps URL (no 3rd-party SDK).

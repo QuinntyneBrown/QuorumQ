@@ -86,7 +86,7 @@ public static class SessionEndpoints
         return Results.Created(
             $"/teams/{teamId}/sessions/{session.Id}",
             new SessionDetail(session.Id, teamId.ToString(), session.State.ToString(),
-                session.Deadline, session.StartedAt, session.StartedBy, 0, null));
+                session.Deadline, session.StartedAt, session.StartedBy, 0, null, false, null, null, null, null));
     }
 
     private static async Task<IResult> GetSession(
@@ -147,7 +147,7 @@ public static class SessionEndpoints
         await db.SaveChangesAsync();
 
         var dto = new SessionDetail(session.Id, session.TeamId.ToString(), session.State.ToString(),
-            session.Deadline, session.StartedAt, session.StartedBy, 0, null);
+            session.Deadline, session.StartedAt, session.StartedBy, 0, null, false, null, null, null, null);
         await hub.Clients.Group(SessionHub.GroupName(sessionId))
             .StateChanged(new { sessionId, state = session.State.ToString() });
 
@@ -173,7 +173,7 @@ public static class SessionEndpoints
         await db.SaveChangesAsync();
 
         var dto = new SessionDetail(session.Id, session.TeamId.ToString(), session.State.ToString(),
-            session.Deadline, session.StartedAt, session.StartedBy, 0, null);
+            session.Deadline, session.StartedAt, session.StartedBy, 0, null, false, null, null, null, null);
         await hub.Clients.Group(SessionHub.GroupName(sessionId))
             .StateChanged(new { sessionId, state = session.State.ToString() });
 
