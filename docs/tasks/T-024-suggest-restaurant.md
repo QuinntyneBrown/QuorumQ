@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`
 **Folder structure:** `docs/folder-structure.md` §4 (`Endpoints/SuggestionEndpoints.cs`), §5.1 (`features/suggestions/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -69,8 +69,8 @@ real time for all members. Duplicate names are short-circuited with an
 
 ## Definition of Done
 
-- [ ] Failing Playwright spec first; passes on all browsers.
-- [ ] Duplicate detection is case-insensitive and punctuation-normalized.
-- [ ] Two contexts observe the same suggestion within 2 s (L2-19
+- [x] Failing Playwright spec first; passes on all browsers.
+- [x] Duplicate detection is case-insensitive and punctuation-normalized.
+- [x] Two contexts observe the same suggestion within 2 s (L2-19
       regression guard).
-- [ ] Form disabled outside `Suggesting` state.
+- [x] Form disabled outside `Suggesting` state.

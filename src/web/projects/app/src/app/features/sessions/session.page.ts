@@ -6,6 +6,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { SessionCardComponent, CountdownComponent, SessionStatus, ConfirmDialogComponent } from '@components';
 import { PresenceComponent } from './presence.component';
+import { SuggestRestaurantComponent } from '../suggestions/suggest-restaurant.component';
+import { SuggestionListComponent } from '../suggestions/suggestion-list.component';
 import { SessionStore } from '../../core/auth/session.store';
 import { SessionHubClient } from '../../core/realtime/session-hub.client';
 import { environment } from '../../../environments/environment';
@@ -24,7 +26,7 @@ interface SessionDetail {
 @Component({
   selector: 'app-session-page',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatChipsModule, SessionCardComponent, CountdownComponent, PresenceComponent],
+  imports: [RouterLink, MatButtonModule, MatChipsModule, SessionCardComponent, CountdownComponent, PresenceComponent, SuggestRestaurantComponent, SuggestionListComponent],
   template: `
     <div class="page-shell">
       @if (!hub.isConnected() && session()) {
@@ -81,7 +83,14 @@ interface SessionDetail {
 
         <div class="content-slots">
           <section class="slot" data-testid="suggestions-slot">
-            <!-- Suggestions — T-024 -->
+            @if (session()) {
+              <app-suggest-restaurant
+                [sessionId]="session()!.id"
+                [disabled]="isSuggestingDisabled()"
+              />
+              <div class="suggestions-gap"></div>
+              <app-suggestion-list [sessionId]="session()!.id" />
+            }
           </section>
           <section class="slot" data-testid="votes-slot">
             <!-- Votes — T-027 -->
@@ -120,6 +129,7 @@ interface SessionDetail {
     }
     .content-slots { margin-top: 24px; display: flex; flex-direction: column; gap: 16px; }
     .slot { min-height: 4px; }
+    .suggestions-gap { height: 16px; }
   `],
 })
 export class SessionPage implements OnInit, OnDestroy {
@@ -144,6 +154,8 @@ export class SessionPage implements OnInit, OnDestroy {
   });
 
   readonly isCancelled = computed(() => this.session()?.state === 'Cancelled');
+
+  readonly isSuggestingDisabled: Signal<boolean> = computed(() => this.session()?.state !== 'Suggesting');
 
   ngOnInit(): void {
     const sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';
