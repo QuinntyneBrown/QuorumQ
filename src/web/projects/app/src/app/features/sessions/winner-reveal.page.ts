@@ -6,6 +6,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatIconModule } from '@angular/material/icon';
 import { WinnerRevealComponent } from '@components';
 import { QqLiveAnnouncer } from '../../core/a11y/live-announcer';
+import { ReviewFormComponent } from '../reviews/review-form.component';
 import { environment } from '../../../environments/environment';
 
 interface SessionWinner {
@@ -22,7 +23,7 @@ interface SessionWinner {
 @Component({
   selector: 'app-winner-reveal-page',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatChipsModule, MatIconModule, WinnerRevealComponent],
+  imports: [RouterLink, MatButtonModule, MatChipsModule, MatIconModule, WinnerRevealComponent, ReviewFormComponent],
   template: `
     <div
       class="winner-page"
@@ -70,6 +71,10 @@ interface SessionWinner {
               Open website
             </a>
           </div>
+          <app-review-form
+            [sessionId]="sessionId()"
+            data-testid="review-form-wrapper"
+          />
           <a
             mat-stroked-button
             [routerLink]="['/teams', session()!.teamId, 'sessions', sessionId()]"

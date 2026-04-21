@@ -10,6 +10,7 @@ public class Restaurant
     public string? WebsiteUrl { get; set; }
     public Guid CreatedBy { get; set; }
     public DateTime CreatedAt { get; set; }
+    public double? AverageRating { get; set; }
 
     public Team Team { get; set; } = null!;
     public ICollection<Suggestion> Suggestions { get; set; } = [];
