@@ -5,6 +5,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { SessionCardComponent, CountdownComponent, SessionStatus, ConfirmDialogComponent } from '@components';
+import { PresenceComponent } from './presence.component';
 import { SessionStore } from '../../core/auth/session.store';
 import { SessionHubClient } from '../../core/realtime/session-hub.client';
 import { environment } from '../../../environments/environment';
@@ -23,7 +24,7 @@ interface SessionDetail {
 @Component({
   selector: 'app-session-page',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, MatChipsModule, SessionCardComponent, CountdownComponent],
+  imports: [RouterLink, MatButtonModule, MatChipsModule, SessionCardComponent, CountdownComponent, PresenceComponent],
   template: `
     <div class="page-shell">
       @if (!hub.isConnected() && session()) {
@@ -89,7 +90,7 @@ interface SessionDetail {
             <!-- Comments — T-030 -->
           </section>
           <section class="slot" data-testid="presence-slot">
-            <!-- Presence — T-023 -->
+            <app-presence [sessionId]="session()!.id" />
           </section>
         </div>
       } @else if (notFound()) {

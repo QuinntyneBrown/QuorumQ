@@ -32,6 +32,7 @@ public static class SessionEndpoints
         sessionGroup.MapPost("/{sessionId:guid}/start-voting", StartVoting);
         sessionGroup.MapPost("/{sessionId:guid}/cancel", CancelSession);
         sessionGroup.MapDelete("/{sessionId:guid}", DeleteSession);
+        sessionGroup.MapGet("/{sessionId:guid}/presence", GetPresence);
 
         return app;
     }
@@ -178,5 +179,24 @@ public static class SessionEndpoints
         await db.SaveChangesAsync();
 
         return Results.NoContent();
+    }
+
+    private record PresenceUser(Guid Id, string DisplayName, string? AvatarUrl);
+
+    private static async Task<IResult> GetPresence(
+        Guid sessionId,
+        AppDbContext db)
+    {
+        var presentIds = SessionHub.GetPresentUsers(sessionId);
+        if (!presentIds.Any())
+            return Results.Ok(Array.Empty<PresenceUser>());
+
+        var users = await db.Users
+            .AsNoTracking()
+            .Where(u => presentIds.Contains(u.Id))
+            .Select(u => new PresenceUser(u.Id, u.DisplayName, u.AvatarUrl))
+            .ToListAsync();
+
+        return Results.Ok(users);
     }
 }

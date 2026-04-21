@@ -5,7 +5,7 @@
 **Primary area:** full stack
 **Design refs:** `docs/designs/07-screens-session.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/sessions/`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
@@ -54,8 +54,8 @@ after a member closes the session screen.
 
 ## Definition of Done
 
-- [ ] Failing spec added first; passes across all browsers.
-- [ ] Presence clears within 30 s after disconnect (verify with Playwright
+- [x] Failing spec added first; passes across all browsers.
+- [x] Presence clears within 30 s after disconnect (verify with Playwright
       fake timers and test-only time helpers).
-- [ ] Avatars are themed and keyboard-focusable with a name tooltip.
-- [ ] Overflow badge appears at > 5 present users.
+- [x] Avatars are themed and keyboard-focusable with a name tooltip.
+- [x] Overflow badge appears at > 5 present users.
