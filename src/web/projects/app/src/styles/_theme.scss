@@ -20,11 +20,11 @@ html.theme-dark {
 
 // Semantic aliases (L2-24 — product code references intention, not mechanism)
 :root {
-  --qq-color-brand:              var(--mdc-theme-primary, #E04F3C);
+  --qq-color-brand:              var(--mdc-theme-primary, #B34032);
   --qq-color-surface-elevated:   var(--mat-app-surface-container-high, #EAE6E0);
   --qq-color-winner-accent:      #F2B134;
   --qq-color-state-suggesting:   var(--mdc-theme-secondary, #4C8B6B);
-  --qq-color-state-voting:       var(--mdc-theme-primary, #E04F3C);
+  --qq-color-state-voting:       var(--mdc-theme-primary, #B34032);
   --qq-color-state-decided:      #F2B134;
   --qq-color-state-cancelled:    #7E7871;
   --qq-color-online-dot:         var(--mdc-theme-secondary, #4C8B6B);

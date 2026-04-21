@@ -6,7 +6,7 @@ are in scope — run this as the last quality gate before release.
 **Primary area:** e2e + small UI fixes discovered in audit
 **Design refs:** `docs/designs/15-accessibility.md`
 **Folder structure:** `docs/folder-structure.md` §6 (`specs/a11y/L2-27...`)
-**Status:** Assigned
+**Status:** Complete
 
 ## Goal
 
