@@ -26,6 +26,18 @@ export const routes: Routes = [
       import('./features/history/restaurant-profile.page').then(m => m.RestaurantProfilePage),
   },
   {
+    path: 'teams/:teamId/history/:sessionId',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/history/session-history-detail.page').then(m => m.SessionHistoryDetailPage),
+  },
+  {
+    path: 'teams/:teamId/history',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/history/session-history.page').then(m => m.SessionHistoryPage),
+  },
+  {
     path: 'teams',
     canActivate: [authGuard],
     loadChildren: () =>
