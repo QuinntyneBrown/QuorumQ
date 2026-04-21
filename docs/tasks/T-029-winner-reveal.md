@@ -5,7 +5,7 @@
 **Primary area:** full stack (frontend-heavy)
 **Design refs:** `docs/designs/07-screens-session.md`, `docs/designs/14-motion.md`
 **Folder structure:** `docs/folder-structure.md` §5.1 (`features/sessions/winner-reveal.page.ts`)
-**Status:** Open
+**Status:** Assigned
 
 ## Goal
 
