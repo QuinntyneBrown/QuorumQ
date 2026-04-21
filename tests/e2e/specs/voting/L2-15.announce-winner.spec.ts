@@ -1,186 +1,132 @@
-import { test, expect, APIRequestContext } from '@playwright/test';
-import { WinnerRevealPage } from '../../pages/sessions/winner-reveal.page';
-import { deleteSession } from '../../fixtures/session.fixture';
+import { test, expect, Page, APIRequestContext } from '@playwright/test';
+import { SignInPage } from '../../pages/auth/sign-in.page';
+import { SuggestionFormPage } from '../../pages/suggestions/suggestion-form.page';
+import { WinnerRevealPageObject } from '../../pages/sessions/winner-reveal.page';
+import { createSessionInState, deleteSession } from '../../fixtures/session.fixture';
 
-test.describe.configure({ mode: 'serial' });
-
-const API_BASE = process.env['API_BASE_URL'] ?? 'http://localhost:5052';
 const ALICE_EMAIL = 'alice@example.com';
 const ALICE_PASSWORD = 'Password1!';
 const BOB_EMAIL = 'bob@example.com';
 const BOB_PASSWORD = 'Password1!';
 const ALICE_TEAM_ID = '22222222-0000-0000-0000-000000000001';
+const API_BASE = process.env['API_BASE_URL'] ?? 'http://localhost:5052';
 
-async function signInViaApi(request: APIRequestContext, email: string, password: string): Promise<void> {
-  await request.post(`${API_BASE}/auth/sign-in`, { data: { email, password } });
+async function signIn(page: Page, email: string, password: string): Promise<void> {
+  const signInPage = new SignInPage(page);
+  await signInPage.goto();
+  await signInPage.signIn({ email, password });
+  await expect(page).toHaveURL(/teams/);
 }
 
-interface SessionSetup {
-  sessionId: string;
-  s1Id: string;
+async function advanceTime(request: APIRequestContext, sessionId: string): Promise<void> {
+  await request.post(`${API_BASE}/_test/advance-time?sessionId=${sessionId}`);
 }
 
-async function setupWinnerSession(
-  aliceRequest: APIRequestContext,
-  opts: { name?: string; address?: string; websiteUrl?: string } = {},
-): Promise<SessionSetup> {
-  const sessionRes = await aliceRequest.post(`${API_BASE}/teams/${ALICE_TEAM_ID}/sessions`, {
-    data: { deadlineMinutes: 30 },
-    failOnStatusCode: false,
-  });
-  const session = await sessionRes.json();
-
-  const s1Res = await aliceRequest.post(`${API_BASE}/sessions/${session.id}/suggestions`, {
-    data: {
-      name: opts.name ?? 'Taco Town',
-      ...(opts.address ? { address: opts.address } : {}),
-      ...(opts.websiteUrl ? { websiteUrl: opts.websiteUrl } : {}),
-    },
-  });
-  const s1 = await s1Res.json();
-
-  await aliceRequest.post(`${API_BASE}/sessions/${session.id}/start-voting`);
-  await aliceRequest.put(`${API_BASE}/sessions/${session.id}/votes`, { data: { suggestionId: s1.id } });
-
-  return { sessionId: session.id, s1Id: s1.id };
+async function advanceTieBreak(request: APIRequestContext, sessionId: string): Promise<void> {
+  await request.post(`${API_BASE}/_test/advance-tiebreak?sessionId=${sessionId}`);
 }
 
 test.describe('Winner reveal (L2-15)', () => {
   test('[L2-15] all members see the animated winner reveal within 2 seconds of transition to Decided', async ({ browser, request }) => {
-    await signInViaApi(request, ALICE_EMAIL, ALICE_PASSWORD);
-
-    const bobCtx = await browser.newContext();
-    await signInViaApi(bobCtx.request, BOB_EMAIL, BOB_PASSWORD);
-
-    const { sessionId } = await setupWinnerSession(request);
+    const session = await createSessionInState(request, ALICE_TEAM_ID);
 
     const aliceCtx = await browser.newContext();
-    const aliceCookies = (await request.storageState()).cookies.filter(c => c.name === '.QuorumQ.Auth');
-    if (aliceCookies.length > 0) await aliceCtx.addCookies(aliceCookies);
-
-    const bobBrowserCtx = await browser.newContext();
-    const bobCookies = (await bobCtx.request.storageState()).cookies.filter(c => c.name === '.QuorumQ.Auth');
-    if (bobCookies.length > 0) await bobBrowserCtx.addCookies(bobCookies);
-
-    const alicePage = await aliceCtx.newPage();
-    const bobPage = await bobBrowserCtx.newPage();
+    const bobCtx = await browser.newContext();
 
     try {
-      await alicePage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${sessionId}`);
-      await expect(alicePage.getByTestId('session-card')).toBeVisible();
+      const alicePage = await aliceCtx.newPage();
+      const bobPage = await bobCtx.newPage();
 
-      await bobPage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${sessionId}`);
-      await expect(bobPage.getByTestId('session-card')).toBeVisible();
+      await signIn(alicePage, ALICE_EMAIL, ALICE_PASSWORD);
+      await signIn(bobPage, BOB_EMAIL, BOB_PASSWORD);
 
-      // Expire the voting deadline
-      await request.post(`${API_BASE}/_test/advance-time?sessionId=${sessionId}`);
+      await alicePage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}`);
+      await bobPage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}`);
 
-      // Both members should navigate to winner reveal within reasonable time (worker up to 5s + 2s render)
-      const winnerPath = new RegExp(`/teams/${ALICE_TEAM_ID}/sessions/${sessionId}/winner`);
-      await alicePage.waitForURL(winnerPath, { timeout: 15000 });
-      await bobPage.waitForURL(winnerPath, { timeout: 15000 });
+      const form = new SuggestionFormPage(alicePage);
+      await form.suggestRestaurant({ name: 'Pizza Palace' });
 
-      // Winner reveal should be visible within 2 seconds of navigation
-      const aliceReveal = new WinnerRevealPage(alicePage);
+      await alicePage.getByTestId('start-voting-btn').click();
+      await expect(alicePage.getByTestId('start-voting-btn')).not.toBeVisible();
+
+      // Advance time to trigger deadline with one suggestion (clear winner)
+      await advanceTime(request, session.id);
+      await alicePage.waitForTimeout(7000);
+
+      // Both pages should navigate to winner reveal
+      await expect(alicePage).toHaveURL(/winner/, { timeout: 4000 });
+      await expect(bobPage).toHaveURL(/winner/, { timeout: 4000 });
+
+      const aliceReveal = new WinnerRevealPageObject(alicePage);
+      const bobReveal = new WinnerRevealPageObject(bobPage);
+
       await aliceReveal.expectWinnerRevealWithin(2000);
-
-      const bobReveal = new WinnerRevealPage(bobPage);
       await bobReveal.expectWinnerRevealWithin(2000);
     } finally {
       await aliceCtx.close();
-      await bobBrowserCtx.close();
       await bobCtx.close();
-      await deleteSession(request, sessionId);
+      await deleteSession(request, session.id);
     }
   });
 
-  test('[L2-15] reveal shows "Get directions" and "Open website" actions when available', async ({ browser, request }) => {
-    await signInViaApi(request, ALICE_EMAIL, ALICE_PASSWORD);
-
-    const { sessionId } = await setupWinnerSession(request, {
-      name: 'Directions Diner',
-      address: '123 Main St, Springfield',
-      websiteUrl: 'https://directionsdiner.example.com',
-    });
-
-    const aliceCtx = await browser.newContext();
-    const aliceCookies = (await request.storageState()).cookies.filter(c => c.name === '.QuorumQ.Auth');
-    if (aliceCookies.length > 0) await aliceCtx.addCookies(aliceCookies);
-
-    const alicePage = await aliceCtx.newPage();
+  test('[L2-15] reveal shows "Get directions" and "Open website" actions when available', async ({ page, request }) => {
+    const session = await createSessionInState(request, ALICE_TEAM_ID);
 
     try {
-      await alicePage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${sessionId}`);
-      await expect(alicePage.getByTestId('session-card')).toBeVisible();
+      await signIn(page, ALICE_EMAIL, ALICE_PASSWORD);
+      await page.goto(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}`);
 
-      await request.post(`${API_BASE}/_test/advance-time?sessionId=${sessionId}`);
+      const form = new SuggestionFormPage(page);
+      await form.suggestRestaurant({
+        name: 'Sushi Spot',
+        address: '123 Main St, San Francisco, CA',
+        websiteUrl: 'https://sushistop.example.com',
+      });
 
-      const winnerPath = new RegExp(`/teams/${ALICE_TEAM_ID}/sessions/${sessionId}/winner`);
-      await alicePage.waitForURL(winnerPath, { timeout: 15000 });
+      await page.getByTestId('start-voting-btn').click();
+      await expect(page.getByTestId('start-voting-btn')).not.toBeVisible();
 
-      const revealPage = new WinnerRevealPage(alicePage);
-      await revealPage.expectWinnerRevealWithin(2000);
-      await revealPage.expectDirectionsLink();
-      await revealPage.expectWebsiteLink();
+      await advanceTime(request, session.id);
+      await page.waitForTimeout(7000);
+
+      await expect(page).toHaveURL(/winner/, { timeout: 4000 });
+
+      const reveal = new WinnerRevealPageObject(page);
+      await reveal.expectWinnerRevealWithin(2000);
+      await reveal.expectDirectionsLink();
+      await reveal.expectWebsiteLink();
     } finally {
-      await aliceCtx.close();
-      await deleteSession(request, sessionId);
+      await deleteSession(request, session.id);
     }
   });
 
-  test('[L2-15] winner chosen at random displays the random-choice chip', async ({ browser, request }) => {
-    await signInViaApi(request, ALICE_EMAIL, ALICE_PASSWORD);
-
-    const bobCtx = await browser.newContext();
-    await signInViaApi(bobCtx.request, BOB_EMAIL, BOB_PASSWORD);
-
-    // Create tied session (same as L2-14 setup)
-    const sessionRes = await request.post(`${API_BASE}/teams/${ALICE_TEAM_ID}/sessions`, {
-      data: { deadlineMinutes: 30 },
-      failOnStatusCode: false,
-    });
-    const session = await sessionRes.json();
-
-    const s1Res = await request.post(`${API_BASE}/sessions/${session.id}/suggestions`, {
-      data: { name: 'Burger Barn 2' },
-    });
-    const s1 = await s1Res.json();
-
-    const s2Res = await request.post(`${API_BASE}/sessions/${session.id}/suggestions`, {
-      data: { name: 'Pizza Palace 2' },
-    });
-    const s2 = await s2Res.json();
-
-    await request.post(`${API_BASE}/sessions/${session.id}/start-voting`);
-    await request.put(`${API_BASE}/sessions/${session.id}/votes`, { data: { suggestionId: s1.id } });
-    await bobCtx.request.put(`${API_BASE}/sessions/${session.id}/votes`, { data: { suggestionId: s2.id } });
-
-    const aliceCtx = await browser.newContext();
-    const aliceCookies = (await request.storageState()).cookies.filter(c => c.name === '.QuorumQ.Auth');
-    if (aliceCookies.length > 0) await aliceCtx.addCookies(aliceCookies);
-
-    const alicePage = await aliceCtx.newPage();
+  test('[L2-15] winner chosen at random displays the random-choice chip', async ({ page, request }) => {
+    const session = await createSessionInState(request, ALICE_TEAM_ID);
 
     try {
-      await alicePage.goto(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}`);
-      await expect(alicePage.getByTestId('session-card')).toBeVisible();
+      await signIn(page, ALICE_EMAIL, ALICE_PASSWORD);
+      await page.goto(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}`);
 
-      // Enter tie-break
-      await request.post(`${API_BASE}/_test/advance-time?sessionId=${session.id}`);
-      await expect(alicePage.getByTestId('tie-break-banner')).toBeVisible({ timeout: 15000 });
+      const form = new SuggestionFormPage(page);
+      await form.suggestRestaurant({ name: 'Alpha Bistro' });
+      await form.suggestRestaurant({ name: 'Beta Cafe' });
 
-      // Expire tie-break with still-tied votes (no new votes)
-      await request.post(`${API_BASE}/_test/advance-tiebreak?sessionId=${session.id}`);
+      await page.getByTestId('start-voting-btn').click();
+      await expect(page.getByTestId('start-voting-btn')).not.toBeVisible();
 
-      const winnerPath = new RegExp(`/teams/${ALICE_TEAM_ID}/sessions/${session.id}/winner`);
-      await alicePage.waitForURL(winnerPath, { timeout: 15000 });
+      // No votes — tie-break, then random
+      await advanceTime(request, session.id);
+      await page.waitForTimeout(7000);
 
-      const revealPage = new WinnerRevealPage(alicePage);
-      await revealPage.expectWinnerRevealWithin(2000);
-      await revealPage.expectRandomChoiceChip();
+      await advanceTieBreak(request, session.id);
+      await page.waitForTimeout(7000);
+
+      await expect(page).toHaveURL(/winner/, { timeout: 4000 });
+
+      const reveal = new WinnerRevealPageObject(page);
+      await reveal.expectWinnerRevealWithin(2000);
+      await reveal.expectRandomChoiceChip();
     } finally {
-      await aliceCtx.close();
-      await bobCtx.close();
       await deleteSession(request, session.id);
     }
   });

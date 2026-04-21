@@ -1,150 +1,155 @@
-import { Component, inject, OnInit, AfterViewInit, signal, ViewChild } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, inject, OnInit, signal, computed, ViewChild } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { LiveAnnouncer } from '@angular/cdk/a11y';
 import { MatButtonModule } from '@angular/material/button';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatIconModule } from '@angular/material/icon';
 import { WinnerRevealComponent } from '@components';
+import { QqLiveAnnouncer } from '../../core/a11y/live-announcer';
 import { environment } from '../../../environments/environment';
 
-interface WinnerSessionDetail {
+interface SessionWinner {
   id: string;
-  teamId: string;
   state: string;
   winnerName?: string;
-  winnerCuisine?: string;
   winnerChosenAtRandom?: boolean;
-  directionsUrl?: string;
-  websiteUrl?: string;
+  winnerCuisine?: string;
+  winnerWebsiteUrl?: string;
+  winnerDirectionsUrl?: string;
+  teamId: string;
 }
 
 @Component({
   selector: 'app-winner-reveal-page',
   standalone: true,
-  imports: [RouterLink, MatButtonModule, WinnerRevealComponent],
+  imports: [RouterLink, MatButtonModule, MatChipsModule, MatIconModule, WinnerRevealComponent],
   template: `
-    <div class="winner-overlay" role="dialog" aria-modal="true" data-testid="winner-reveal-page">
-      <qq-winner-reveal #revealRef>
-        @if (session(); as s) {
-          @if (s.winnerCuisine) {
-            <p class="cuisine" data-testid="winner-cuisine">{{ s.winnerCuisine }}</p>
+    <div
+      class="winner-page"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="session()?.winnerName ? 'Winner: ' + session()!.winnerName : 'Winner reveal'"
+      data-testid="winner-reveal-page"
+    >
+      @if (session() && session()!.winnerName) {
+        <qq-winner-reveal
+          #revealComp
+          data-testid="winner-reveal"
+        >
+          @if (session()!.winnerCuisine) {
+            <p class="cuisine" data-testid="winner-cuisine">{{ session()!.winnerCuisine }}</p>
           }
-          @if (s.winnerChosenAtRandom) {
-            <span class="random-chip" data-testid="random-choice-chip">Chosen at random</span>
+          @if (session()!.winnerChosenAtRandom) {
+            <mat-chip-set>
+              <mat-chip data-testid="random-choice-chip">Chosen at random</mat-chip>
+            </mat-chip-set>
           }
           <div class="actions">
-            @if (s.directionsUrl) {
-              <a
-                mat-flat-button
-                color="primary"
-                [href]="s.directionsUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-testid="directions-link"
-              >
-                Get directions
-              </a>
-            }
-            @if (s.websiteUrl) {
-              <a
-                mat-stroked-button
-                [href]="s.websiteUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-testid="website-link"
-              >
-                Open website
-              </a>
-            }
+            <a
+              mat-flat-button
+              color="primary"
+              [href]="session()!.winnerDirectionsUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              [attr.disabled]="session()!.winnerDirectionsUrl ? null : true"
+              data-testid="directions-btn"
+            >
+              <mat-icon>directions</mat-icon>
+              Get directions
+            </a>
             <a
               mat-stroked-button
-              [routerLink]="['/teams', s.teamId, 'sessions', s.id]"
-              data-testid="back-to-session-btn"
+              [href]="session()!.winnerWebsiteUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              [class.disabled]="!session()!.winnerWebsiteUrl"
+              [attr.aria-disabled]="!session()!.winnerWebsiteUrl"
+              data-testid="website-btn"
             >
-              Back to session
+              <mat-icon>open_in_new</mat-icon>
+              Open website
             </a>
           </div>
-        }
-      </qq-winner-reveal>
+          <a
+            mat-stroked-button
+            [routerLink]="['/teams', session()!.teamId, 'sessions', sessionId()]"
+            data-testid="back-to-session-btn"
+          >
+            Back to session
+          </a>
+        </qq-winner-reveal>
+      } @else if (!session()) {
+        <p>Loading…</p>
+      }
     </div>
   `,
   styles: [`
-    .winner-overlay {
-      position: fixed;
-      inset: 0;
-      background: var(--mat-sys-background);
+    .winner-page {
       display: flex;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      min-height: 100vh;
       padding: 24px;
+      background: var(--mat-sys-surface);
     }
     qq-winner-reveal {
       width: 100%;
       max-width: 480px;
     }
     .cuisine {
-      color: var(--mat-sys-on-surface-variant);
+      color: var(--mat-sys-on-tertiary-container);
+      opacity: 0.8;
+      margin: 4px 0 8px;
       font-size: 1rem;
-      margin: 8px 0 0;
-    }
-    .random-chip {
-      display: inline-block;
-      background: var(--mat-sys-secondary-container);
-      color: var(--mat-sys-on-secondary-container);
-      border-radius: 16px;
-      padding: 2px 10px;
-      font-size: 12px;
-      margin-top: 8px;
     }
     .actions {
       display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 20px;
-      width: 100%;
+      gap: 12px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
     }
+    a.disabled { pointer-events: none; opacity: 0.4; }
   `],
 })
-export class WinnerRevealPage implements OnInit, AfterViewInit {
-  @ViewChild('revealRef') revealRef!: WinnerRevealComponent;
-
+export class WinnerRevealPage implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly http = inject(HttpClient);
-  private readonly announcer = inject(LiveAnnouncer);
+  private readonly router = inject(Router);
+  private readonly announcer = inject(QqLiveAnnouncer);
 
-  readonly session = signal<WinnerSessionDetail | null>(null);
-  private revealed = false;
+  @ViewChild('revealComp') revealComp?: WinnerRevealComponent;
+
+  readonly sessionId = signal('');
+  readonly teamId = signal('');
+  readonly session = signal<SessionWinner | null>(null);
 
   ngOnInit(): void {
+    this.sessionId.set(this.route.snapshot.paramMap.get('sessionId') ?? '');
+    this.teamId.set(this.route.snapshot.paramMap.get('teamId') ?? '');
     this.loadSession();
   }
 
-  ngAfterViewInit(): void {
-    const s = this.session();
-    if (s?.winnerName) {
-      this.triggerReveal(s.winnerName);
-    }
-  }
-
-  private triggerReveal(name: string): void {
-    if (this.revealed || !this.revealRef) return;
-    this.revealed = true;
-    this.revealRef.reveal(name);
-    this.announcer.announce(`Winner: ${name}`, 'assertive');
-  }
-
   private loadSession(): void {
-    const teamId = this.route.snapshot.paramMap.get('teamId') ?? '';
-    const sessionId = this.route.snapshot.paramMap.get('sessionId') ?? '';
+    const teamId = this.teamId();
+    const sessionId = this.sessionId();
     this.http
-      .get<WinnerSessionDetail>(`${environment.apiBaseUrl}/teams/${teamId}/sessions/${sessionId}`)
+      .get<SessionWinner>(`${environment.apiBaseUrl}/teams/${teamId}/sessions/${sessionId}`)
       .subscribe({
         next: s => {
-          this.session.set(s);
-          if (s.winnerName) {
-            this.triggerReveal(s.winnerName);
+          if (s.state !== 'Decided' || !s.winnerName) {
+            this.router.navigate(['/teams', teamId, 'sessions', sessionId]);
+            return;
           }
+          this.session.set(s);
+          this.announcer.assertive(`Winner: ${s.winnerName}`);
+          setTimeout(() => {
+            if (this.revealComp && s.winnerName) {
+              this.revealComp.reveal(s.winnerName);
+            }
+          }, 100);
         },
+        error: () => this.router.navigate(['/teams', teamId, 'sessions', sessionId]),
       });
   }
 }

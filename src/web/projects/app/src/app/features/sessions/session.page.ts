@@ -1,5 +1,5 @@
 import { Component, inject, OnInit, OnDestroy, signal, computed } from '@angular/core';
-import { ActivatedRoute, RouterLink, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
@@ -200,7 +200,8 @@ export class SessionPage implements OnInit, OnDestroy {
         tieBreak: { active: true, tiedSuggestionIds: payload.tiedSuggestionIds, deadline: payload.tieBreakDeadline }
       } : s);
     });
-    this.hub.on<{ state: string }>('Decided', () => {
+    this.hub.on<{ state: string; sessionId: string }>('Decided', payload => {
+      this.session.update(s => s ? { ...s, state: payload.state } : s);
       const s = this.session();
       if (s) {
         this.router.navigate(['/teams', s.teamId, 'sessions', s.id, 'winner']);
